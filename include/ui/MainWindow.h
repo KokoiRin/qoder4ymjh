@@ -14,12 +14,11 @@
 #include <QCheckBox>
 #include <QSpinBox>
 #include <QApplication>
-
 // 引入我们的核心模块
 #include "core/WindowManager.h"
 #include "core/ColorPicker.h"
 #include "core/ClickSimulator.h"
-#include "utils/AsyncLogger.h"
+#include "ui/LogWindow.h"
 
 class MainWindow : public QMainWindow
 {
@@ -30,8 +29,7 @@ public:
     ~MainWindow();
 
 private slots:
-    // 原始按钮
-    void onButtonClicked();
+
     
     // 窗口管理
     void onRefreshWindows();
@@ -66,12 +64,14 @@ private:
     ColorPicker* colorPicker;
     ClickSimulator* clickSimulator;
     
+    // 日志窗口
+    LogWindow* logWindow;
+    
     // UI控件
     QWidget* centralWidget;
     QVBoxLayout* mainLayout;
     
-    // 原始按钮
-    QPushButton* button;
+
     
     // 窗口绑定区域
     QGroupBox* windowBindGroup;

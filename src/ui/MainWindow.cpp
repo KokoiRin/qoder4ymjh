@@ -1,5 +1,5 @@
 #include "ui/MainWindow.h"
-#include "ui/MainWindow.h"
+#include "utils/AsyncLogger.h"
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QStringList>
@@ -9,6 +9,7 @@ MainWindow::MainWindow(QWidget *parent)
     , windowManager(new WindowManager(this))
     , colorPicker(new ColorPicker(this))
     , clickSimulator(new ClickSimulator(this))
+    , logWindow(new LogWindow(this))
 {
     setupUI();
     connectSignals();
@@ -34,15 +35,15 @@ void MainWindow::setupUI()
     setCentralWidget(centralWidget);
     mainLayout = new QVBoxLayout(centralWidget);
     
-    // 原始按钮
-    button = new QPushButton("点击我!", this);
-    button->setMinimumSize(200, 50);
-    mainLayout->addWidget(button);
+
     
     // 设置各个功能区域
     setupWindowBindingUI();
     setupColorPickerUI();
     setupClickSimulatorUI();
+    
+    // 添加日志窗口
+    mainLayout->addWidget(logWindow);
     
     mainLayout->addStretch(); // 添加弹性空间
 }
@@ -178,8 +179,7 @@ void MainWindow::setupClickSimulatorUI()
 
 void MainWindow::connectSignals()
 {
-    // 原始按钮
-    connect(button, &QPushButton::clicked, this, &MainWindow::onButtonClicked);
+
     
     // 窗口管理信号
     connect(refreshButton, &QPushButton::clicked, this, &MainWindow::onRefreshWindows);
@@ -213,11 +213,7 @@ void MainWindow::connectSignals()
 
 // ============ 槽函数实现 ============
 
-void MainWindow::onButtonClicked()
-{
-    LOG_BUTTON_CLICK("点击我!", "原始测试按钮");
-    QMessageBox::information(this, "按钮点击", "你点击了按钮！");
-}
+
 
 void MainWindow::onRefreshWindows()
 {
