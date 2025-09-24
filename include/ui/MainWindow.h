@@ -19,6 +19,7 @@
 #include "core/WindowManager.h"
 #include "core/ColorPicker.h"
 #include "core/ClickSimulator.h"
+#include "utils/AsyncLogger.h"
 
 class MainWindow : public QMainWindow
 {

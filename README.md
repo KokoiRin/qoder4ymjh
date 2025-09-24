@@ -36,6 +36,7 @@ QtDemo/
 - **WindowManager**: 负责窗口枚举、绑定和管理
 - **ColorPicker**: 提供实时颜色拾取功能
 - **ClickSimulator**: 实现精确的鼠标点击模拟
+- **AsyncLogger**: 📝 异步日志系统，记录所有操作和数据
 - **MainWindow**: 统一的用户界面
 
 ### 🪟 窗口管理功能

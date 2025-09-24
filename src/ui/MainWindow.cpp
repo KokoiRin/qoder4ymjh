@@ -215,11 +215,13 @@ void MainWindow::connectSignals()
 
 void MainWindow::onButtonClicked()
 {
+    LOG_BUTTON_CLICK("点击我!", "原始测试按钮");
     QMessageBox::information(this, "按钮点击", "你点击了按钮！");
 }
 
 void MainWindow::onRefreshWindows()
 {
+    LOG_BUTTON_CLICK("刷新列表", "刷新窗口列表");
     windowManager->refreshWindowList();
     
     // 更新组合框
@@ -231,11 +233,16 @@ void MainWindow::onRefreshWindows()
     }
     
     updateWindowInfo();
-    updateClickStatus(QString("已刷新，找到 %1 个窗口").arg(windowManager->getWindowCount()));
+    QString statusMsg = QString("已刷新，找到 %1 个窗口").arg(windowManager->getWindowCount());
+    updateClickStatus(statusMsg);
+    
+    LOG_INFO("WindowManager", statusMsg);
 }
 
 void MainWindow::onBindWindow()
 {
+    LOG_BUTTON_CLICK("绑定窗口", "尝试绑定窗口");
+    
     int index = windowComboBox->currentIndex();
     if (windowManager->bindWindow(index)) {
         WindowInfo info = windowManager->getBoundWindowInfo();
@@ -244,12 +251,20 @@ void MainWindow::onBindWindow()
         clickSimulator->setTargetWindow(info.hwnd);
         
         updateWindowInfo();
-        updateClickStatus(QString("已绑定窗口: %1").arg(info.title));
+        QString statusMsg = QString("已绑定窗口: %1").arg(info.title);
+        updateClickStatus(statusMsg);
+        
+        // 记录窗口绑定日志
+        QString windowDetails = QString("类名: %1, 句柄: 0x%2")
+            .arg(info.className)
+            .arg((quintptr)info.hwnd, 0, 16);
+        LOG_WINDOW_BOUND(info.title, windowDetails);
         
         QMessageBox::information(this, "绑定成功", 
             QString("已绑定窗口: %1").arg(info.title));
     } else {
         updateClickStatus("窗口绑定失败", true);
+        LOG_ERROR("WindowManager", "窗口绑定失败", "用户未选择有效窗口");
         QMessageBox::warning(this, "错误", "请先选择一个有效窗口！");
     }
 }
@@ -262,13 +277,16 @@ void MainWindow::onWindowSelectionChanged()
 void MainWindow::onStartColorPicker()
 {
     if (!windowManager->isBound()) {
+        LOG_ERROR("ColorPicker", "无法启动取色", "未绑定窗口");
         QMessageBox::warning(this, "错误", "请先绑定一个窗口！");
         return;
     }
     
     if (!colorPicker->isPicking()) {
+        LOG_BUTTON_CLICK("开始取色", "启动颜色拾取模式");
         colorPicker->startPicking();
     } else {
+        LOG_BUTTON_CLICK("停止取色", "停止颜色拾取模式");
         colorPicker->stopPicking();
     }
 }
@@ -286,6 +304,14 @@ void MainWindow::onColorPicked(const QColor& color, const QPoint& position)
     QString message = QString("已获取颜色: %1 at (%2, %3)")
         .arg(color.name()).arg(position.x()).arg(position.y());
     updateClickStatus(message);
+    
+    // 记录取色日志
+    QString windowInfo;
+    if (windowManager->isBound()) {
+        WindowInfo info = windowManager->getBoundWindowInfo();
+        windowInfo = QString("窗口: %1").arg(info.title);
+    }
+    LOG_COLOR_PICKED(color, position, windowInfo);
 }
 
 void MainWindow::onPickingStarted()
@@ -304,8 +330,11 @@ void MainWindow::onPickingStopped()
 
 void MainWindow::onSimulateClick()
 {
+    LOG_BUTTON_CLICK("执行点击", "尝试模拟点击");
+    
     if (!clickSimulator->hasTargetWindow()) {
         updateClickStatus("错误: 请先绑定一个窗口！", true);
+        LOG_ERROR("ClickSimulator", "点击模拟失败", "未绑定目标窗口");
         QMessageBox::warning(this, "错误", "请先绑定一个窗口！");
         return;
     }
@@ -316,6 +345,7 @@ void MainWindow::onSimulateClick()
     
     if (coords.size() != 2) {
         updateClickStatus("错误: 请输入正确的坐标格式 (x,y)！", true);
+        LOG_ERROR("ClickSimulator", "坐标格式错误", QString("输入坐标: %1").arg(posText));
         QMessageBox::warning(this, "错误", "请输入正确的坐标格式 (x,y)！");
         return;
     }
@@ -326,6 +356,7 @@ void MainWindow::onSimulateClick()
     
     if (!okX || !okY) {
         updateClickStatus("错误: 请输入有效的数字坐标！", true);
+        LOG_ERROR("ClickSimulator", "坐标解析失败", QString("输入坐标: %1").arg(posText));
         QMessageBox::warning(this, "错误", "请输入有效的数字坐标！");
         return;
     }
@@ -336,6 +367,15 @@ void MainWindow::onSimulateClick()
     ClickType clickType = doubleClickCheckBox->isChecked() ? ClickType::Double : ClickType::Single;
     
     updateClickStatus(QString("正在执行点击 (%1, %2)...").arg(x).arg(y));
+    
+    // 记录点击尝试
+    QString coordTypeName = coordTypeCombo->currentText();
+    QString buttonName = mouseButtonCombo->currentText();
+    QString clickTypeName = clickType == ClickType::Double ? "双击" : "单击";
+    
+    LOG_INFO("ClickSimulator", 
+        QString("尝试执行%1%2 - %3(%4, %5)")
+            .arg(clickTypeName).arg(buttonName).arg(coordTypeName).arg(x).arg(y));
     
     // 执行点击
     bool success = clickSimulator->click(x, y, coordType, button, clickType);
@@ -349,9 +389,9 @@ void MainWindow::onClickExecuted(const QPoint& position, CoordinateType coordTyp
 {
     QString coordTypeName;
     switch (coordType) {
-        case CoordinateType::Screen: coordTypeName = "屏幕"; break;
-        case CoordinateType::Window: coordTypeName = "窗口"; break;
-        case CoordinateType::Client: coordTypeName = "客户区"; break;
+        case CoordinateType::Screen: coordTypeName = "屏幕坐标"; break;
+        case CoordinateType::Window: coordTypeName = "窗口坐标"; break;
+        case CoordinateType::Client: coordTypeName = "客户区坐标"; break;
     }
     
     QString buttonName;
@@ -361,14 +401,21 @@ void MainWindow::onClickExecuted(const QPoint& position, CoordinateType coordTyp
         case MouseButton::Middle: buttonName = "中键"; break;
     }
     
-    QString message = QString("✓ 成功执行%1点击 - %2坐标(%3, %4)")
+    QString message = QString("✓ 成功执行%1点击 - %2(%3, %4)")
         .arg(buttonName).arg(coordTypeName).arg(position.x()).arg(position.y());
     updateClickStatus(message);
+    
+    // 记录成功的点击日志
+    LOG_CLICK_SIMULATED(position, coordTypeName, buttonName, true);
 }
 
 void MainWindow::onClickFailed(const QString& reason)
 {
-    updateClickStatus(QString("✗ 点击失败: %1").arg(reason), true);
+    QString message = QString("✗ 点击失败: %1").arg(reason);
+    updateClickStatus(message, true);
+    
+    // 记录失败的点击日志
+    LOG_ERROR("ClickSimulator", "点击模拟失败", reason);
 }
 
 void MainWindow::mousePressEvent(QMouseEvent *event)

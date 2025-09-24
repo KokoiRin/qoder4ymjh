@@ -13,7 +13,8 @@ HEADERS += \
     include/core/WindowManager.h \
     include/core/ColorPicker.h \
     include/core/ClickSimulator.h \
-    include/ui/MainWindow.h
+    include/ui/MainWindow.h \
+    include/utils/AsyncLogger.h
 
 # 源文件
 SOURCES += \
@@ -21,7 +22,8 @@ SOURCES += \
     src/core/WindowManager.cpp \
     src/core/ColorPicker.cpp \
     src/core/ClickSimulator.cpp \
-    src/ui/MainWindow.cpp
+    src/ui/MainWindow.cpp \
+    src/utils/AsyncLogger.cpp
 
 # Windows特定库
 win32 {

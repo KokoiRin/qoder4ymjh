@@ -47,3 +47,10 @@ endif()
 set_target_properties(QtDemo PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
+
+# 编译器特定设置
+if(MSVC)
+    target_compile_options(QtDemo PRIVATE /W4)
+else()
+    target_compile_options(QtDemo PRIVATE -Wall -Wextra -Wpedantic)
+endif()
