@@ -1,0 +1,53 @@
+# 编译产物
+build/
+cmake-build-*/
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+
+# Qt 相关
+*.qrc.depends
+moc_*.cpp
+*.moc
+ui_*.h
+qrc_*.cpp
+.qt/
+.qmake.stash
+*.pro.user*
+
+# CMake 相关
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Testing/
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+
+# Ninja 相关
+.ninja_deps
+.ninja_log
+build.ninja
+
+# IDE 相关
+.idea/
+.vscode/
+*.vcxproj*
+*.sln
+*.user
+
+# 系统相关
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+*.log
+
+# 输出目录
+/out/

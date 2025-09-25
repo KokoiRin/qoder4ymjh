@@ -43,9 +43,13 @@ if(WIN32)
     target_link_libraries(QtDemo user32 gdi32)
 endif()
 
-# 设置输出目录
+# 设置输出目录到 d:/ws/out
+set(OUTPUT_DIRECTORY "d:/ws/out")
+file(MAKE_DIRECTORY ${OUTPUT_DIRECTORY})
 set_target_properties(QtDemo PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+    RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG ${OUTPUT_DIRECTORY}
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE ${OUTPUT_DIRECTORY}
 )
 
 # 编译器特定设置

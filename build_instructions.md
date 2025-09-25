@@ -1,35 +1,56 @@
 # 编译说明
 
-## 在CLion中配置和编译
+## 快速编译（推荐）
 
-### 方法1：直接在CLion中打开
+### 方法1：使用构建脚本
+**Windows 批处理版本：**
+```cmd
+# 直接双击运行或在命令行中执行
+build.bat
+```
+
+**PowerShell 版本：**
+```powershell
+# 正常编译
+.\build.ps1
+
+# 清理并重新编译
+.\build.ps1 -Clean
+
+# 编译 Debug 版本
+.\build.ps1 -Config Debug
+```
+
+**编译输出：**
+- 可执行文件输出到：`d:/ws/out/QtDemo.exe`
+- 构建文件位于：`build/` 目录（会被 .gitignore 忽略）
+
+## 手动编译
+
+### 方法2：命令行编译
+```powershell
+# 创建构建目录
+mkdir build
+cd build
+
+# CMake 配置
+cmake -G "MinGW Makefiles" ^
+      -DCMAKE_PREFIX_PATH="D:/Qt/6.9.2/mingw_64" ^
+      -DCMAKE_C_COMPILER="D:/Qt/Tools/mingw1310_64/bin/gcc.exe" ^
+      -DCMAKE_CXX_COMPILER="D:/Qt/Tools/mingw1310_64/bin/g++.exe" ^
+      ..
+
+# 编译
+mingw32-make
+```
+
+编译完成后，可执行文件将位于 `d:/ws/out/QtDemo.exe`
+
+### 方法3：在CLion中编译
 1. 打开CLion
 2. 选择 "Open" 或 "File" -> "Open" 
 3. 选择包含 `CMakeLists.txt` 的项目文件夹 (d:\ws\new)
 4. CLion会自动检测CMake项目并配置
-
-### 方法2：命令行编译（需要先安装编译器）
-
-#### 使用Visual Studio Build Tools
-```powershell
-# 安装Visual Studio Build Tools或Visual Studio
-# 打开 "Developer Command Prompt for VS"
-cd "d:\ws\new"
-mkdir build
-cd build
-cmake ..
-cmake --build .
-```
-
-#### 使用MinGW
-```powershell
-# 确保已安装MinGW并添加到PATH
-cd "d:\ws\new"
-mkdir build  
-cd build
-cmake -G "MinGW Makefiles" ..
-mingw32-make
-```
 
 ### 所需依赖
 1. **Qt6**: 下载并安装Qt6 (推荐Qt 6.5+)
