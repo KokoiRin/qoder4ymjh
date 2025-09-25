@@ -19,7 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
     onWindowSelectionChanged();
     
     // 设置窗口属性
-    setWindowTitle("Qt Demo - 高级窗口操作工具");
+    setWindowTitle("qoder4huhu");
     setMinimumSize(700, 800);
     resize(800, 900);
 }

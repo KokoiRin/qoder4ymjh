@@ -31,7 +31,8 @@
 #### 其他限制
 - **Require signed commits**: ⚠️ (可选，增强安全性)
 - **Require linear history**: ✅ (推荐，保持清晰的历史)
-- **Include administrators**: ✅ (管理员也需要遵循规则)
+- **Include administrators**: ✅ (重要：管理员也需要遵循审查规则)
+- **Restrict pushes that create matching branches**: ✅ (防止直接推送到主分支)
 - **Allow force pushes**: ❌
 - **Allow deletions**: ❌
 
