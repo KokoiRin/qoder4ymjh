@@ -3,6 +3,7 @@
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QStringList>
+#include <QTabWidget>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -10,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent)
     , colorPicker(new ColorPicker(this))
     , clickSimulator(new ClickSimulator(this))
     , logWindow(new LogWindow(this))
+    , previewPage(nullptr)
 {
     setupUI();
     connectSignals();
@@ -19,9 +21,9 @@ MainWindow::MainWindow(QWidget *parent)
     onWindowSelectionChanged();
     
     // 设置窗口属性
-    setWindowTitle("qoder4huhu");
-    setMinimumSize(700, 800);
-    resize(800, 900);
+    setWindowTitle("Qoder4Huhu - 多功能桌面工具");
+    setMinimumSize(900, 700);
+    resize(1000, 800);
 }
 
 MainWindow::~MainWindow()
@@ -35,57 +37,62 @@ void MainWindow::setupUI()
     setCentralWidget(centralWidget);
     mainLayout = new QVBoxLayout(centralWidget);
     
-
+    // 创建标签页组件
+    tabWidget = new QTabWidget(this);
+    mainLayout->addWidget(tabWidget);
     
-    // 设置各个功能区域
-    setupWindowBindingUI();
-    setupColorPickerUI();
-    setupClickSimulatorUI();
+    // 设置各个功能页面
+    setupWindowManagePage();
+    setupPreviewPage();
+    setupLogPage();
     
-    // 添加日志窗口
-    mainLayout->addWidget(logWindow);
-    
-    mainLayout->addStretch(); // 添加弹性空间
+    // 连接标签页切换信号
+    connect(tabWidget, &QTabWidget::currentChanged, this, &MainWindow::onTabChanged);
 }
 
-void MainWindow::setupWindowBindingUI()
+void MainWindow::setupWindowManagePage()
 {
-    windowBindGroup = new QGroupBox("窗口绑定", this);
+    windowManagePage = new QWidget();
+    QVBoxLayout* pageLayout = new QVBoxLayout(windowManagePage);
+    
+    // 窗口绑定区域
+    windowBindGroup = new QGroupBox("窗口绑定与管理", windowManagePage);
     QVBoxLayout* bindLayout = new QVBoxLayout(windowBindGroup);
     
     // 窗口选择区域
     QHBoxLayout* selectLayout = new QHBoxLayout();
-    windowComboBox = new QComboBox(this);
+    windowComboBox = new QComboBox(windowManagePage);
     windowComboBox->setMinimumWidth(350);
-    refreshButton = new QPushButton("刷新列表", this);
-    bindButton = new QPushButton("绑定窗口", this);
+    refreshButton = new QPushButton("刷新列表", windowManagePage);
+    bindButton = new QPushButton("绑定窗口", windowManagePage);
     
+    selectLayout->addWidget(new QLabel("选择窗口:", windowManagePage));
     selectLayout->addWidget(windowComboBox);
     selectLayout->addWidget(refreshButton);
     selectLayout->addWidget(bindButton);
+    selectLayout->addStretch();
     bindLayout->addLayout(selectLayout);
     
     // 窗口信息显示
-    windowInfoLabel = new QLabel("未选择窗口", this);
-    windowInfoLabel->setStyleSheet("QLabel { background-color: #f0f0f0; padding: 10px; border: 1px solid #ccc; }");
+    windowInfoLabel = new QLabel("未选择窗口", windowManagePage);
+    windowInfoLabel->setStyleSheet("QLabel { background-color: #f0f0f0; padding: 15px; border: 1px solid #ccc; }");
     windowInfoLabel->setWordWrap(true);
-    windowInfoLabel->setMinimumHeight(80);
+    windowInfoLabel->setMinimumHeight(120);
     bindLayout->addWidget(windowInfoLabel);
     
-    mainLayout->addWidget(windowBindGroup);
-}
-
-void MainWindow::setupColorPickerUI()
-{
-    colorPickerGroup = new QGroupBox("颜色拾取", this);
+    pageLayout->addWidget(windowBindGroup);
+    
+    // 颜色拾取区域
+    colorPickerGroup = new QGroupBox("颜色拾取工具", windowManagePage);
     QVBoxLayout* colorLayout = new QVBoxLayout(colorPickerGroup);
     
     // 控制区域
     QHBoxLayout* controlLayout = new QHBoxLayout();
-    colorPickerButton = new QPushButton("开始取色 (按ESC停止)", this);
+    colorPickerButton = new QPushButton("开始取色 (按ESC停止)", windowManagePage);
+    colorPickerButton->setStyleSheet("QPushButton { background-color: #FF9800; color: white; font-weight: bold; padding: 10px; }");
     
-    QLabel* intervalLabel = new QLabel("更新间隔(ms):", this);
-    updateIntervalSpinBox = new QSpinBox(this);
+    QLabel* intervalLabel = new QLabel("更新间隔(ms):", windowManagePage);
+    updateIntervalSpinBox = new QSpinBox(windowManagePage);
     updateIntervalSpinBox->setRange(10, 1000);
     updateIntervalSpinBox->setValue(50);
     updateIntervalSpinBox->setSuffix(" ms");
@@ -97,32 +104,31 @@ void MainWindow::setupColorPickerUI()
     colorLayout->addLayout(controlLayout);
     
     // 颜色显示区域
-    colorDisplayLabel = new QLabel("颜色: 未选择", this);
-    colorDisplayLabel->setMinimumHeight(40);
-    colorDisplayLabel->setStyleSheet("QLabel { background-color: white; border: 1px solid #ccc; padding: 5px; }");
+    colorDisplayLabel = new QLabel("颜色: 未选择", windowManagePage);
+    colorDisplayLabel->setMinimumHeight(60);
+    colorDisplayLabel->setStyleSheet("QLabel { background-color: white; border: 2px solid #ccc; padding: 10px; font-size: 14px; }");
     colorLayout->addWidget(colorDisplayLabel);
     
     // 颜色信息
-    colorInfoLabel = new QLabel("位置信息将在这里显示", this);
-    colorInfoLabel->setStyleSheet("QLabel { background-color: #f9f9f9; padding: 5px; border: 1px solid #ddd; }");
+    colorInfoLabel = new QLabel("点击开始取色后，位置和颜色信息将在这里显示", windowManagePage);
+    colorInfoLabel->setStyleSheet("QLabel { background-color: #f9f9f9; padding: 10px; border: 1px solid #ddd; }");
+    colorInfoLabel->setWordWrap(true);
     colorLayout->addWidget(colorInfoLabel);
     
-    mainLayout->addWidget(colorPickerGroup);
-}
-
-void MainWindow::setupClickSimulatorUI()
-{
-    clickSimulatorGroup = new QGroupBox("点击模拟", this);
+    pageLayout->addWidget(colorPickerGroup);
+    
+    // 点击模拟区域
+    clickSimulatorGroup = new QGroupBox("鼠标点击模拟器", windowManagePage);
     QVBoxLayout* clickLayout = new QVBoxLayout(clickSimulatorGroup);
     
     // 坐标输入区域
     QHBoxLayout* posLayout = new QHBoxLayout();
-    QLabel* posLabel = new QLabel("坐标 (x,y):", this);
-    clickPosEdit = new QLineEdit("100,100", this);
-    clickPosEdit->setMaximumWidth(100);
+    QLabel* posLabel = new QLabel("坐标 (x,y):", windowManagePage);
+    clickPosEdit = new QLineEdit("100,100", windowManagePage);
+    clickPosEdit->setMaximumWidth(120);
     
-    QLabel* coordLabel = new QLabel("坐标类型:", this);
-    coordTypeCombo = new QComboBox(this);
+    QLabel* coordLabel = new QLabel("坐标类型:", windowManagePage);
+    coordTypeCombo = new QComboBox(windowManagePage);
     coordTypeCombo->addItem("屏幕坐标", static_cast<int>(CoordinateType::Screen));
     coordTypeCombo->addItem("窗口坐标", static_cast<int>(CoordinateType::Window));
     coordTypeCombo->addItem("客户区坐标", static_cast<int>(CoordinateType::Client));
@@ -136,16 +142,16 @@ void MainWindow::setupClickSimulatorUI()
     
     // 点击选项区域
     QHBoxLayout* optionLayout = new QHBoxLayout();
-    QLabel* buttonLabel = new QLabel("鼠标按键:", this);
-    mouseButtonCombo = new QComboBox(this);
+    QLabel* buttonLabel = new QLabel("鼠标按键:", windowManagePage);
+    mouseButtonCombo = new QComboBox(windowManagePage);
     mouseButtonCombo->addItem("左键", static_cast<int>(MouseButton::Left));
     mouseButtonCombo->addItem("右键", static_cast<int>(MouseButton::Right));
     mouseButtonCombo->addItem("中键", static_cast<int>(MouseButton::Middle));
     
-    doubleClickCheckBox = new QCheckBox("双击", this);
+    doubleClickCheckBox = new QCheckBox("双击", windowManagePage);
     
-    QLabel* delayLabel = new QLabel("延迟(ms):", this);
-    clickDelaySpinBox = new QSpinBox(this);
+    QLabel* delayLabel = new QLabel("延迟(ms):", windowManagePage);
+    clickDelaySpinBox = new QSpinBox(windowManagePage);
     clickDelaySpinBox->setRange(0, 1000);
     clickDelaySpinBox->setValue(50);
     clickDelaySpinBox->setSuffix(" ms");
@@ -160,9 +166,10 @@ void MainWindow::setupClickSimulatorUI()
     
     // 操作按钮区域
     QHBoxLayout* actionLayout = new QHBoxLayout();
-    simulateClickButton = new QPushButton("执行点击", this);
-    simulateClickButton->setStyleSheet("QPushButton { background-color: #4CAF50; color: white; font-weight: bold; padding: 8px; }");
-    bringToFrontButton = new QPushButton("置顶窗口", this);
+    simulateClickButton = new QPushButton("执行点击", windowManagePage);
+    simulateClickButton->setStyleSheet("QPushButton { background-color: #4CAF50; color: white; font-weight: bold; padding: 12px; font-size: 14px; }");
+    bringToFrontButton = new QPushButton("置顶窗口", windowManagePage);
+    bringToFrontButton->setStyleSheet("QPushButton { background-color: #2196F3; color: white; font-weight: bold; padding: 12px; }");
     
     actionLayout->addWidget(simulateClickButton);
     actionLayout->addWidget(bringToFrontButton);
@@ -170,11 +177,29 @@ void MainWindow::setupClickSimulatorUI()
     clickLayout->addLayout(actionLayout);
     
     // 状态显示
-    clickStatusLabel = new QLabel("准备就绪", this);
-    clickStatusLabel->setStyleSheet("QLabel { background-color: #e8f5e8; padding: 5px; border: 1px solid #4CAF50; }");
+    clickStatusLabel = new QLabel("准备就绪", windowManagePage);
+    clickStatusLabel->setStyleSheet("QLabel { background-color: #e8f5e8; padding: 10px; border: 1px solid #4CAF50; }");
     clickLayout->addWidget(clickStatusLabel);
     
-    mainLayout->addWidget(clickSimulatorGroup);
+    pageLayout->addWidget(clickSimulatorGroup);
+    pageLayout->addStretch();
+    
+    tabWidget->addTab(windowManagePage, "窗口管理");
+}
+
+void MainWindow::setupPreviewPage()
+{
+    previewPage = new WindowPreviewPage();
+    
+    // 设置预览页面固定16:9比例
+    previewPage->setFixedAspectRatio(true);
+    
+    tabWidget->addTab(previewPage, "窗口预览");
+}
+
+void MainWindow::setupLogPage()
+{
+    tabWidget->addTab(logWindow, "日志记录");
 }
 
 void MainWindow::connectSignals()
@@ -246,6 +271,11 @@ void MainWindow::onBindWindow()
         // 同时设置到点击模拟器
         clickSimulator->setTargetWindow(info.hwnd);
         
+        // 设置到预览页面
+        if (previewPage) {
+            previewPage->setTargetWindow(info.hwnd, info.title);
+        }
+        
         updateWindowInfo();
         QString statusMsg = QString("已绑定窗口: %1").arg(info.title);
         updateClickStatus(statusMsg);
@@ -256,12 +286,10 @@ void MainWindow::onBindWindow()
             .arg((quintptr)info.hwnd, 0, 16);
         LOG_WINDOW_BOUND(info.title, windowDetails);
         
-        QMessageBox::information(this, "绑定成功", 
-            QString("已绑定窗口: %1").arg(info.title));
+        LOG_INFO("WindowManager", QString("窗口绑定成功: %1").arg(info.title));
     } else {
         updateClickStatus("窗口绑定失败", true);
         LOG_ERROR("WindowManager", "窗口绑定失败", "用户未选择有效窗口");
-        QMessageBox::warning(this, "错误", "请先选择一个有效窗口！");
     }
 }
 
@@ -274,7 +302,7 @@ void MainWindow::onStartColorPicker()
 {
     if (!windowManager->isBound()) {
         LOG_ERROR("ColorPicker", "无法启动取色", "未绑定窗口");
-        QMessageBox::warning(this, "错误", "请先绑定一个窗口！");
+        updateClickStatus("请先绑定一个窗口后再使用取色功能", true);
         return;
     }
     
@@ -331,7 +359,6 @@ void MainWindow::onSimulateClick()
     if (!clickSimulator->hasTargetWindow()) {
         updateClickStatus("错误: 请先绑定一个窗口！", true);
         LOG_ERROR("ClickSimulator", "点击模拟失败", "未绑定目标窗口");
-        QMessageBox::warning(this, "错误", "请先绑定一个窗口！");
         return;
     }
     
@@ -342,7 +369,6 @@ void MainWindow::onSimulateClick()
     if (coords.size() != 2) {
         updateClickStatus("错误: 请输入正确的坐标格式 (x,y)！", true);
         LOG_ERROR("ClickSimulator", "坐标格式错误", QString("输入坐标: %1").arg(posText));
-        QMessageBox::warning(this, "错误", "请输入正确的坐标格式 (x,y)！");
         return;
     }
     
@@ -353,9 +379,10 @@ void MainWindow::onSimulateClick()
     if (!okX || !okY) {
         updateClickStatus("错误: 请输入有效的数字坐标！", true);
         LOG_ERROR("ClickSimulator", "坐标解析失败", QString("输入坐标: %1").arg(posText));
-        QMessageBox::warning(this, "错误", "请输入有效的数字坐标！");
         return;
     }
+    
+    // ... existing code ...
     
     // 获取设置
     CoordinateType coordType = static_cast<CoordinateType>(coordTypeCombo->currentData().toInt());
@@ -479,9 +506,23 @@ void MainWindow::updateClickStatus(const QString& message, bool isError)
     }
 }
 
-QString MainWindow::formatColorInfo(const QColor& color, const QPoint& position) const
+QString MainWindow::formatColorInfo(const QColor& color, const QPoint& /* position */) const
 {
     return QString("颜色: RGB(%1, %2, %3) - %4")
         .arg(color.red()).arg(color.green()).arg(color.blue())
         .arg(color.name().toUpper());
+}
+
+// 标签页切换事件
+void MainWindow::onTabChanged(int index)
+{
+    // 如果切换到预览页面，确保已绑定窗口
+    if (index == 1 && !windowManager->isBound()) { // 预览页面是第2个标签页
+        updateClickStatus("请先在窗口管理页面绑定一个窗口后再使用预览功能", true);
+        LOG_INFO("MainWindow", "用户尝试访问预览页面但未绑定窗口");
+        tabWidget->setCurrentIndex(0); // 跳回窗口管理页面
+        return;
+    }
+    
+    LOG_INFO("MainWindow", QString("切换到标签页: %1").arg(tabWidget->tabText(index)));
 }

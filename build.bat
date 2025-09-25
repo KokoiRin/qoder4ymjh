@@ -11,6 +11,25 @@ echo 项目目录: %PROJECT_ROOT%
 echo 构建目录: %BUILD_DIR%
 echo 输出目录: %OUTPUT_DIR%
 
+REM 尝试自动检测Qt路径
+set QT_PATHS=D:/Qt/6.9.2/mingw_64;D:/Qt/6.8.0/mingw_64;D:/Qt/6.7.0/mingw_64;D:/Qt/6.6.0/mingw_64;D:/Qt/6.5.0/mingw_64;C:/Qt/6.9.2/mingw_64;C:/Qt/6.8.0/mingw_64;C:/Qt/6.7.0/mingw_64;C:/Qt/6.6.0/mingw_64;C:/Qt/6.5.0/mingw_64
+set QT_PREFIX_PATH=
+
+echo 正在检测Qt安装路径...
+for %%P in (%QT_PATHS%) do (
+    if exist "%%P\bin\qmake.exe" (
+        set QT_PREFIX_PATH=%%P
+        echo 找到Qt安装: %%P
+        goto qt_found
+    )
+)
+
+echo 警告: 未找到Qt安装路径，将使用默认路径
+set QT_PREFIX_PATH=D:/Qt/6.9.2/mingw_64
+
+:qt_found
+echo 使用Qt路径: %QT_PREFIX_PATH%
+
 REM 创建并清理构建目录
 if exist "%BUILD_DIR%" (
     echo 清理构建目录...

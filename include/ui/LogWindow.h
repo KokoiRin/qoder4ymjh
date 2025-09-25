@@ -15,6 +15,7 @@
 #include <QFont>
 #include <QMessageBox>
 #include <QList>
+#include <QTimer>
 
 #include "utils/AsyncLogger.h"
 

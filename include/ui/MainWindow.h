@@ -14,11 +14,13 @@
 #include <QCheckBox>
 #include <QSpinBox>
 #include <QApplication>
+#include <QTabWidget>
 // 引入我们的核心模块
 #include "core/WindowManager.h"
 #include "core/ColorPicker.h"
 #include "core/ClickSimulator.h"
 #include "ui/LogWindow.h"
+#include "ui/WindowPreviewPage.h"
 
 class MainWindow : public QMainWindow
 {
@@ -47,6 +49,9 @@ private slots:
     void onSimulateClick();
     void onClickExecuted(const QPoint& position, CoordinateType coordType, MouseButton button);
     void onClickFailed(const QString& reason);
+    
+    // 标签页切换
+    void onTabChanged(int index);
 
 protected:
     void mousePressEvent(QMouseEvent *event) override;
@@ -55,9 +60,9 @@ protected:
 private:
     // UI组件
     void setupUI();
-    void setupWindowBindingUI();
-    void setupColorPickerUI();
-    void setupClickSimulatorUI();
+    void setupWindowManagePage();
+    void setupPreviewPage();
+    void setupLogPage();
     
     // 核心模块
     WindowManager* windowManager;
@@ -70,6 +75,11 @@ private:
     // UI控件
     QWidget* centralWidget;
     QVBoxLayout* mainLayout;
+    QTabWidget* tabWidget;
+    
+    // 各个功能页面
+    QWidget* windowManagePage;
+    WindowPreviewPage* previewPage;
     
 
     
@@ -78,6 +88,7 @@ private:
     QComboBox* windowComboBox;
     QPushButton* refreshButton;
     QPushButton* bindButton;
+    QPushButton* previewButton;
     QLabel* windowInfoLabel;
     
     // 取色区域

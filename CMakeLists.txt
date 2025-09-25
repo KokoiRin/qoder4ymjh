@@ -15,14 +15,26 @@ set(CMAKE_AUTORCC ON)
 # 包含头文件目录
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-# 收集源文件
-file(GLOB_RECURSE SOURCES
-    "src/*.cpp"
-    "src/*.h"
+# 明确指定源文件
+set(SOURCES
+    src/main.cpp
+    src/ui/MainWindow.cpp
+    src/ui/LogWindow.cpp
+    src/ui/WindowPreviewPage.cpp
+    src/core/WindowManager.cpp
+    src/core/ColorPicker.cpp
+    src/core/ClickSimulator.cpp
+    src/utils/AsyncLogger.cpp
 )
 
-file(GLOB_RECURSE HEADERS
-    "include/*.h"
+set(HEADERS
+    include/ui/MainWindow.h
+    include/ui/LogWindow.h
+    include/ui/WindowPreviewPage.h
+    include/core/WindowManager.h
+    include/core/ColorPicker.h
+    include/core/ClickSimulator.h
+    include/utils/AsyncLogger.h
 )
 
 # 添加可执行文件
