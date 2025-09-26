@@ -37,6 +37,10 @@ public:
     // 获取窗口信息
     QRect getWindowRect() const;
     QRect getClientRect() const;
+    
+    // 获取窗口边框信息
+    QRect getClientAreaInWindow() const;  // 获取客户区在窗口中的位置和大小
+    QPoint getBorderOffset() const;       // 获取边框偏移量
 
 private:
     HWND targetWindow;

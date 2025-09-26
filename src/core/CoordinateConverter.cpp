@@ -130,6 +130,51 @@ QRect CoordinateConverter::getClientRect() const
     return QRect(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
 }
 
+QRect CoordinateConverter::getClientAreaInWindow() const
+{
+    if (!hasValidWindow()) {
+        return QRect();
+    }
+    
+    // 获取客户区的屏幕坐标
+    POINT clientTopLeft = {0, 0};
+    ClientToScreen(targetWindow, &clientTopLeft);
+    
+    // 获取窗口的屏幕坐标
+    RECT windowRect;
+    GetWindowRect(targetWindow, &windowRect);
+    
+    // 计算客户区在窗口中的相对位置
+    int clientX = clientTopLeft.x - windowRect.left;
+    int clientY = clientTopLeft.y - windowRect.top;
+    
+    // 获取客户区大小
+    RECT clientRect;
+    GetClientRect(targetWindow, &clientRect);
+    int clientWidth = clientRect.right - clientRect.left;
+    int clientHeight = clientRect.bottom - clientRect.top;
+    
+    return QRect(clientX, clientY, clientWidth, clientHeight);
+}
+
+QPoint CoordinateConverter::getBorderOffset() const
+{
+    if (!hasValidWindow()) {
+        return QPoint(0, 0);
+    }
+    
+    // 获取客户区的屏幕坐标
+    POINT clientTopLeft = {0, 0};
+    ClientToScreen(targetWindow, &clientTopLeft);
+    
+    // 获取窗口的屏幕坐标
+    RECT windowRect;
+    GetWindowRect(targetWindow, &windowRect);
+    
+    // 计算边框偏移量
+    return QPoint(clientTopLeft.x - windowRect.left, clientTopLeft.y - windowRect.top);
+}
+
 // 内部转换实现方法
 QPoint CoordinateConverter::convertScreenToWindow(const QPoint& screenPos) const
 {

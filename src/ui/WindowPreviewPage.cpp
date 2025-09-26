@@ -15,6 +15,7 @@ WindowPreviewPage::WindowPreviewPage(QWidget *parent)
     , currentFrameRate(5)
     , currentScale(1.0)
     , fixedAspectRatio(false)
+    , coordinateConverter(new CoordinateConverter(nullptr))
 {
     setupUI();
     connectSignals();
@@ -39,6 +40,7 @@ WindowPreviewPage::~WindowPreviewPage()
     if (previewActive) {
         stopPreview();
     }
+    delete coordinateConverter;
 }
 
 void WindowPreviewPage::setupUI()
@@ -110,6 +112,9 @@ void WindowPreviewPage::setTargetWindow(HWND hwnd, const QString& windowTitle)
 {
     targetWindow = hwnd;
     this->windowTitle = windowTitle;
+    
+    // 设置坐标转换器的目标窗口
+    coordinateConverter->setTargetWindow(hwnd);
 
     if (targetWindow && IsWindow(targetWindow)) {
         QString info = QString("已连接窗口: %1 (句柄: 0x%2)")
@@ -217,7 +222,7 @@ void WindowPreviewPage::setScaleFactor(double scale)
 
     // 如果有最后一帧，重新缩放显示
     if (!lastFrame.isNull()) {
-        updatePreviewImage(lastFrame);
+        updatePreviewImageWithDynamicScale(lastFrame);
     }
 }
 
@@ -225,7 +230,7 @@ void WindowPreviewPage::setFixedAspectRatio(bool enable)
 {
     fixedAspectRatio = enable;
     if (enable && !lastFrame.isNull()) {
-        updatePreviewImage(lastFrame);
+        updatePreviewImageWithDynamicScale(lastFrame);
     }
 }
 
@@ -262,10 +267,10 @@ void WindowPreviewPage::captureFrame()
         return;
     }
 
-    QPixmap frame = captureWindow(targetWindow);
+    QPixmap frame = captureClientArea(targetWindow);
     if (!frame.isNull()) {
         lastFrame = frame;
-        updatePreviewImage(frame);
+        updatePreviewImageWithDynamicScale(frame);
     } else {
         updateStatus("窗口截图失败", true);
     }
@@ -351,6 +356,80 @@ QPixmap WindowPreviewPage::captureWindow(HWND hwnd)
     return result;
 }
 
+QPixmap WindowPreviewPage::captureClientArea(HWND hwnd)
+{
+    if (!hwnd || !IsWindow(hwnd) || !coordinateConverter->hasValidWindow()) {
+        return QPixmap();
+    }
+
+    // 获取客户区信息
+    QRect clientRect = coordinateConverter->getClientRect();
+    if (clientRect.width() <= 0 || clientRect.height() <= 0) {
+        return QPixmap();
+    }
+
+    // 创建设备上下文
+    HDC windowDC = GetDC(hwnd);
+    if (!windowDC) {
+        return QPixmap();
+    }
+
+    HDC memoryDC = CreateCompatibleDC(windowDC);
+    if (!memoryDC) {
+        ReleaseDC(hwnd, windowDC);
+        return QPixmap();
+    }
+
+    // 创建位图（只创建客户区大小）
+    HBITMAP bitmap = CreateCompatibleBitmap(windowDC, clientRect.width(), clientRect.height());
+    if (!bitmap) {
+        DeleteDC(memoryDC);
+        ReleaseDC(hwnd, windowDC);
+        return QPixmap();
+    }
+
+    // 选择位图到内存DC
+    HBITMAP oldBitmap = (HBITMAP)SelectObject(memoryDC, bitmap);
+
+    // 获取客户区DC
+    HDC clientDC = GetDC(hwnd);
+    
+    // 复制客户区内容（只复制客户区部分）
+    bool success = BitBlt(memoryDC, 0, 0, clientRect.width(), clientRect.height(), 
+                         clientDC, 0, 0, SRCCOPY);
+
+    QPixmap result;
+    if (success) {
+        // 将HBITMAP转换为QPixmap
+        BITMAP bm;
+        GetObject(bitmap, sizeof(bm), &bm);
+
+        QImage image(bm.bmWidth, bm.bmHeight, QImage::Format_RGB32);
+
+        BITMAPINFO bmi;
+        memset(&bmi, 0, sizeof(bmi));
+        bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        bmi.bmiHeader.biWidth = bm.bmWidth;
+        bmi.bmiHeader.biHeight = -bm.bmHeight; // 负值表示从上到下
+        bmi.bmiHeader.biPlanes = 1;
+        bmi.bmiHeader.biBitCount = 32;
+        bmi.bmiHeader.biCompression = BI_RGB;
+
+        if (GetDIBits(windowDC, bitmap, 0, bm.bmHeight, image.bits(), &bmi, DIB_RGB_COLORS)) {
+            result = QPixmap::fromImage(image);
+        }
+    }
+
+    // 清理资源
+    ReleaseDC(hwnd, clientDC);
+    SelectObject(memoryDC, oldBitmap);
+    DeleteObject(bitmap);
+    DeleteDC(memoryDC);
+    ReleaseDC(hwnd, windowDC);
+
+    return result;
+}
+
 void WindowPreviewPage::updatePreviewImage(const QPixmap& pixmap)
 {
     if (pixmap.isNull()) {
@@ -382,6 +461,61 @@ void WindowPreviewPage::updatePreviewImage(const QPixmap& pixmap)
     imageLabel->resize(scaledPixmap.size());
 }
 
+void WindowPreviewPage::updatePreviewImageWithDynamicScale(const QPixmap& pixmap)
+{
+    if (pixmap.isNull()) {
+        return;
+    }
+
+    // 获取可用的显示区域大小（减去控制面板的高度）
+    QSize availableSize = scrollArea->size();
+    
+    // 保留一些边距
+    availableSize -= QSize(20, 20);
+    
+    QPixmap scaledPixmap;
+    
+    if (fixedAspectRatio) {
+        // 固定16:9比例模式
+        double aspectRatio = 16.0 / 9.0;
+        int targetWidth = availableSize.width();
+        int targetHeight = (int)(targetWidth / aspectRatio);
+        
+        // 如果高度超出，按高度调整
+        if (targetHeight > availableSize.height()) {
+            targetHeight = availableSize.height();
+            targetWidth = (int)(targetHeight * aspectRatio);
+        }
+        
+        // 应用用户设置的缩放系数
+        if (currentScale != 1.0) {
+            targetWidth = (int)(targetWidth * currentScale);
+            targetHeight = (int)(targetHeight * currentScale);
+        }
+        
+        scaledPixmap = pixmap.scaled(targetWidth, targetHeight, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    } else {
+        // 动态比例模式 - 保持原始窗口比例
+        QSize targetSize = pixmap.size();
+        
+        // 按比例缩放到可用区域
+        targetSize.scale(availableSize, Qt::KeepAspectRatio);
+        
+        // 应用用户设置的缩放系数
+        if (currentScale != 1.0) {
+            targetSize = targetSize * currentScale;
+        }
+        
+        scaledPixmap = pixmap.scaled(targetSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    }
+
+    imageLabel->setPixmap(scaledPixmap);
+    imageLabel->resize(scaledPixmap.size());
+    
+    // 调整滚动区域的显示
+    scrollArea->ensureWidgetVisible(imageLabel);
+}
+
 void WindowPreviewPage::updateStatus(const QString& message, bool isError)
 {
     statusLabel->setText(message);
@@ -401,4 +535,14 @@ void WindowPreviewPage::closeEvent(QCloseEvent *event)
     LOG_INFO("WindowPreviewPage", "窗口预览页面已关闭");
     emit windowClosed();
     QWidget::closeEvent(event);
+}
+
+void WindowPreviewPage::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    
+    // 当窗口大小改变时，重新调整预览图像大小
+    if (!lastFrame.isNull()) {
+        updatePreviewImageWithDynamicScale(lastFrame);
+    }
 }

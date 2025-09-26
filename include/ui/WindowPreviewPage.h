@@ -14,6 +14,8 @@
 #include <QCloseEvent>
 #include <QString>
 #include <QImage>
+#include <QResizeEvent>
+#include "core/CoordinateConverter.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -45,6 +47,7 @@ signals:
 
 protected:
     void closeEvent(QCloseEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
 
 private slots:
     void captureFrame();
@@ -56,7 +59,9 @@ private:
     void setupUI();
     void connectSignals();
     QPixmap captureWindow(HWND hwnd);
+    QPixmap captureClientArea(HWND hwnd);  // 新增：只捕获客户区
     void updatePreviewImage(const QPixmap& pixmap);
+    void updatePreviewImageWithDynamicScale(const QPixmap& pixmap);  // 新增：动态缩放
     void updateStatus(const QString& message, bool isError = false);
     
     // UI组件
@@ -76,6 +81,7 @@ private:
     
     // 功能组件
     QTimer* captureTimer;
+    CoordinateConverter* coordinateConverter;  // 新增：坐标转换器
     
     // 状态变量
     HWND targetWindow;
