@@ -7,9 +7,8 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , windowManager(new WindowManager(this))
+    , interactionFacade(new InteractionFacade(this))
     , colorPicker(new ColorPicker(this))
-    , clickSimulator(new ClickSimulator(this))
     , logWindow(new LogWindow(this))
     , previewPage(nullptr)
 {
@@ -17,7 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
     connectSignals();
     
     // 初始化
-    windowManager->refreshWindowList();
+    interactionFacade->refreshWindowList();
     onWindowSelectionChanged();
     
     // 设置窗口属性
@@ -182,6 +181,152 @@ void MainWindow::setupWindowManagePage()
     clickLayout->addWidget(clickStatusLabel);
     
     pageLayout->addWidget(clickSimulatorGroup);
+    
+    // 键盘模拟区域
+    keySimulatorGroup = new QGroupBox("键盘按键模拟器", windowManagePage);
+    QVBoxLayout* keyLayout = new QVBoxLayout(keySimulatorGroup);
+    
+    // 按键选择区域
+    QHBoxLayout* keySelectLayout = new QHBoxLayout();
+    QLabel* keyLabel = new QLabel("选择按键:", windowManagePage);
+    keyCombo = new QComboBox(windowManagePage);
+    keyCombo->addItem("A", static_cast<int>(KeyCode::A));
+    keyCombo->addItem("B", static_cast<int>(KeyCode::B));
+    keyCombo->addItem("C", static_cast<int>(KeyCode::C));
+    keyCombo->addItem("D", static_cast<int>(KeyCode::D));
+    keyCombo->addItem("E", static_cast<int>(KeyCode::E));
+    keyCombo->addItem("F", static_cast<int>(KeyCode::F));
+    keyCombo->addItem("G", static_cast<int>(KeyCode::G));
+    keyCombo->addItem("H", static_cast<int>(KeyCode::H));
+    keyCombo->addItem("I", static_cast<int>(KeyCode::I));
+    keyCombo->addItem("J", static_cast<int>(KeyCode::J));
+    keyCombo->addItem("K", static_cast<int>(KeyCode::K));
+    keyCombo->addItem("L", static_cast<int>(KeyCode::L));
+    keyCombo->addItem("M", static_cast<int>(KeyCode::M));
+    keyCombo->addItem("N", static_cast<int>(KeyCode::N));
+    keyCombo->addItem("O", static_cast<int>(KeyCode::O));
+    keyCombo->addItem("P", static_cast<int>(KeyCode::P));
+    keyCombo->addItem("Q", static_cast<int>(KeyCode::Q));
+    keyCombo->addItem("R", static_cast<int>(KeyCode::R));
+    keyCombo->addItem("S", static_cast<int>(KeyCode::S));
+    keyCombo->addItem("T", static_cast<int>(KeyCode::T));
+    keyCombo->addItem("U", static_cast<int>(KeyCode::U));
+    keyCombo->addItem("V", static_cast<int>(KeyCode::V));
+    keyCombo->addItem("W", static_cast<int>(KeyCode::W));
+    keyCombo->addItem("X", static_cast<int>(KeyCode::X));
+    keyCombo->addItem("Y", static_cast<int>(KeyCode::Y));
+    keyCombo->addItem("Z", static_cast<int>(KeyCode::Z));
+    keyCombo->addItem("0", static_cast<int>(KeyCode::Num0));
+    keyCombo->addItem("1", static_cast<int>(KeyCode::Num1));
+    keyCombo->addItem("2", static_cast<int>(KeyCode::Num2));
+    keyCombo->addItem("3", static_cast<int>(KeyCode::Num3));
+    keyCombo->addItem("4", static_cast<int>(KeyCode::Num4));
+    keyCombo->addItem("5", static_cast<int>(KeyCode::Num5));
+    keyCombo->addItem("6", static_cast<int>(KeyCode::Num6));
+    keyCombo->addItem("7", static_cast<int>(KeyCode::Num7));
+    keyCombo->addItem("8", static_cast<int>(KeyCode::Num8));
+    keyCombo->addItem("9", static_cast<int>(KeyCode::Num9));
+    keyCombo->addItem("Enter", static_cast<int>(KeyCode::Enter));
+    keyCombo->addItem("Space", static_cast<int>(KeyCode::Space));
+    keyCombo->addItem("Tab", static_cast<int>(KeyCode::Tab));
+    keyCombo->addItem("Escape", static_cast<int>(KeyCode::Escape));
+    keyCombo->addItem("F1", static_cast<int>(KeyCode::F1));
+    keyCombo->addItem("F2", static_cast<int>(KeyCode::F2));
+    keyCombo->addItem("F3", static_cast<int>(KeyCode::F3));
+    keyCombo->addItem("F4", static_cast<int>(KeyCode::F4));
+    keyCombo->addItem("F5", static_cast<int>(KeyCode::F5));
+    
+    keySelectLayout->addWidget(keyLabel);
+    keySelectLayout->addWidget(keyCombo);
+    keySelectLayout->addStretch();
+    keyLayout->addLayout(keySelectLayout);
+    
+    // 修饰键选择
+    QHBoxLayout* modifierLayout = new QHBoxLayout();
+    ctrlCheckBox = new QCheckBox("Ctrl", windowManagePage);
+    altCheckBox = new QCheckBox("Alt", windowManagePage);
+    shiftCheckBox = new QCheckBox("Shift", windowManagePage);
+    
+    QLabel* keyDelayLabel = new QLabel("按键延迟(ms):", windowManagePage);
+    keyDelaySpinBox = new QSpinBox(windowManagePage);
+    keyDelaySpinBox->setRange(0, 1000);
+    keyDelaySpinBox->setValue(30);
+    keyDelaySpinBox->setSuffix(" ms");
+    
+    modifierLayout->addWidget(new QLabel("修饰键:", windowManagePage));
+    modifierLayout->addWidget(ctrlCheckBox);
+    modifierLayout->addWidget(altCheckBox);
+    modifierLayout->addWidget(shiftCheckBox);
+    modifierLayout->addWidget(keyDelayLabel);
+    modifierLayout->addWidget(keyDelaySpinBox);
+    modifierLayout->addStretch();
+    keyLayout->addLayout(modifierLayout);
+    
+    // 文本输入区域
+    QHBoxLayout* textLayout = new QHBoxLayout();
+    QLabel* textLabel = new QLabel("输入文本:", windowManagePage);
+    textEdit = new QLineEdit("你好，世界！", windowManagePage);
+    textEdit->setMaximumWidth(200);
+    
+    textLayout->addWidget(textLabel);
+    textLayout->addWidget(textEdit);
+    textLayout->addStretch();
+    keyLayout->addLayout(textLayout);
+    
+    // 按键操作按钮
+    QHBoxLayout* keyActionLayout = new QHBoxLayout();
+    sendKeyButton = new QPushButton("发送按键", windowManagePage);
+    sendKeyButton->setStyleSheet("QPushButton { background-color: #FF5722; color: white; font-weight: bold; padding: 12px; }");
+    sendTextButton = new QPushButton("发送文本", windowManagePage);
+    sendTextButton->setStyleSheet("QPushButton { background-color: #9C27B0; color: white; font-weight: bold; padding: 12px; }");
+    
+    keyActionLayout->addWidget(sendKeyButton);
+    keyActionLayout->addWidget(sendTextButton);
+    keyActionLayout->addStretch();
+    keyLayout->addLayout(keyActionLayout);
+    
+    // 键盘状态显示
+    keyStatusLabel = new QLabel("准备就绪", windowManagePage);
+    keyStatusLabel->setStyleSheet("QLabel { background-color: #e8f5e8; padding: 10px; border: 1px solid #FF5722; }");
+    keyLayout->addWidget(keyStatusLabel);
+    
+    pageLayout->addWidget(keySimulatorGroup);
+    
+    // 坐标显示区域
+    coordinateGroup = new QGroupBox("坐标显示与捕获", windowManagePage);
+    QVBoxLayout* coordLayout = new QVBoxLayout(coordinateGroup);
+    
+    // 坐标显示控制
+    QHBoxLayout* coordControlLayout = new QHBoxLayout();
+    toggleCoordinateButton = new QPushButton("开启坐标显示", windowManagePage);
+    toggleCoordinateButton->setStyleSheet("QPushButton { background-color: #607D8B; color: white; font-weight: bold; padding: 10px; }");
+    
+    captureKeyLabel = new QLabel("捕获快捷键:", windowManagePage);
+    captureKeyCombo = new QComboBox(windowManagePage);
+    captureKeyCombo->addItem("F9", VK_F9);
+    captureKeyCombo->addItem("F10", VK_F10);
+    captureKeyCombo->addItem("F11", VK_F11);
+    captureKeyCombo->addItem("F12", VK_F12);
+    
+    coordControlLayout->addWidget(toggleCoordinateButton);
+    coordControlLayout->addWidget(captureKeyLabel);
+    coordControlLayout->addWidget(captureKeyCombo);
+    coordControlLayout->addStretch();
+    coordLayout->addLayout(coordControlLayout);
+    
+    // 坐标显示区域
+    coordinateDisplayLabel = new QLabel("坐标显示: 未开启", windowManagePage);
+    coordinateDisplayLabel->setStyleSheet("QLabel { background-color: #f0f0f0; padding: 15px; border: 1px solid #ccc; font-family: monospace; }");
+    coordinateDisplayLabel->setWordWrap(true);
+    coordinateDisplayLabel->setMinimumHeight(80);
+    coordLayout->addWidget(coordinateDisplayLabel);
+    
+    // 坐标状态
+    coordinateStatusLabel = new QLabel("坐标显示关闭，点击上方按钮开启", windowManagePage);
+    coordinateStatusLabel->setStyleSheet("QLabel { background-color: #fff3cd; padding: 10px; border: 1px solid #ffeaa7; }");
+    coordLayout->addWidget(coordinateStatusLabel);
+    
+    pageLayout->addWidget(coordinateGroup);
     pageLayout->addStretch();
     
     tabWidget->addTab(windowManagePage, "窗口管理");
@@ -204,8 +349,6 @@ void MainWindow::setupLogPage()
 
 void MainWindow::connectSignals()
 {
-
-    
     // 窗口管理信号
     connect(refreshButton, &QPushButton::clicked, this, &MainWindow::onRefreshWindows);
     connect(bindButton, &QPushButton::clicked, this, &MainWindow::onBindWindow);
@@ -221,19 +364,44 @@ void MainWindow::connectSignals()
     connect(updateIntervalSpinBox, QOverload<int>::of(&QSpinBox::valueChanged),
             colorPicker, &ColorPicker::setUpdateInterval);
     
-    // 点击模拟器信号
+    // 鼠标点击相关 - 使用新的interactionFacade
     connect(simulateClickButton, &QPushButton::clicked, this, &MainWindow::onSimulateClick);
-    connect(clickSimulator, &ClickSimulator::clickExecuted, this, &MainWindow::onClickExecuted);
-    connect(clickSimulator, &ClickSimulator::clickFailed, this, &MainWindow::onClickFailed);
-    connect(clickDelaySpinBox, QOverload<int>::of(&QSpinBox::valueChanged),
-            clickSimulator, &ClickSimulator::setClickDelay);
     connect(bringToFrontButton, &QPushButton::clicked, [this]() {
-        if (clickSimulator->bringWindowToFront()) {
+        if (interactionFacade->bringWindowToFront()) {
             updateClickStatus("窗口已置顶");
         } else {
             updateClickStatus("窗口置顶失败", true);
         }
     });
+    connect(interactionFacade, &InteractionFacade::mouseClickExecuted, this, &MainWindow::onClickExecuted);
+    connect(interactionFacade, &InteractionFacade::mouseClickFailed, this, &MainWindow::onClickFailed);
+    
+    // 键盘模拟相关 - 使用新的interactionFacade
+    connect(sendKeyButton, &QPushButton::clicked, this, &MainWindow::onSendKey);
+    connect(sendTextButton, &QPushButton::clicked, [this]() {
+        QString text = textEdit->text();
+        if (text.isEmpty()) {
+            updateKeyStatus("请输入要发送的文本", true);
+            return;
+        }
+        
+        if (interactionFacade->sendText(text)) {
+            updateKeyStatus("文本发送成功: " + text);
+        } else {
+            updateKeyStatus("文本发送失败", true);
+        }
+    });
+    connect(interactionFacade, &InteractionFacade::keyExecuted, this, &MainWindow::onKeyExecuted);
+    connect(interactionFacade, &InteractionFacade::keyFailed, this, &MainWindow::onKeyFailed);
+    
+    // 坐标显示信号 - 使用新的interactionFacade
+    connect(toggleCoordinateButton, &QPushButton::clicked, this, &MainWindow::onToggleCoordinateDisplay);
+    connect(captureKeyCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), [this](int) {
+        int vkey = captureKeyCombo->currentData().toInt();
+        interactionFacade->setCoordinateCaptureKey(vkey);
+    });
+    connect(interactionFacade, &InteractionFacade::coordinateChanged, this, &MainWindow::onCoordinateChanged);
+    connect(interactionFacade, &InteractionFacade::coordinateCaptured, this, &MainWindow::onCoordinateCaptured);
 }
 
 // ============ 槽函数实现 ============
@@ -243,21 +411,22 @@ void MainWindow::connectSignals()
 void MainWindow::onRefreshWindows()
 {
     LOG_BUTTON_CLICK("刷新列表", "刷新窗口列表");
-    windowManager->refreshWindowList();
+    interactionFacade->refreshWindowList();
     
     // 更新组合框
     windowComboBox->clear();
-    for (int i = 0; i < windowManager->getWindowCount(); ++i) {
-        WindowInfo info = windowManager->getWindowInfo(i);
+    const auto& windowList = interactionFacade->getWindowList();
+    for (size_t i = 0; i < windowList.size(); ++i) {
+        const WindowInfo& info = windowList[i];
         QString displayText = QString("%1 [%2]").arg(info.title).arg(info.className);
         windowComboBox->addItem(displayText);
     }
     
     updateWindowInfo();
-    QString statusMsg = QString("已刷新，找到 %1 个窗口").arg(windowManager->getWindowCount());
+    QString statusMsg = QString("已刷新，找到 %1 个窗口").arg(windowList.size());
     updateClickStatus(statusMsg);
     
-    LOG_INFO("WindowManager", statusMsg);
+    LOG_INFO("InteractionFacade", statusMsg);
 }
 
 void MainWindow::onBindWindow()
@@ -265,11 +434,8 @@ void MainWindow::onBindWindow()
     LOG_BUTTON_CLICK("绑定窗口", "尝试绑定窗口");
     
     int index = windowComboBox->currentIndex();
-    if (windowManager->bindWindow(index)) {
-        WindowInfo info = windowManager->getBoundWindowInfo();
-        
-        // 同时设置到点击模拟器
-        clickSimulator->setTargetWindow(info.hwnd);
+    if (interactionFacade->bindWindow(index)) {
+        WindowInfo info = interactionFacade->getCurrentWindowInfo();
         
         // 设置到预览页面
         if (previewPage) {
@@ -286,10 +452,10 @@ void MainWindow::onBindWindow()
             .arg((quintptr)info.hwnd, 0, 16);
         LOG_WINDOW_BOUND(info.title, windowDetails);
         
-        LOG_INFO("WindowManager", QString("窗口绑定成功: %1").arg(info.title));
+        LOG_INFO("InteractionFacade", QString("窗口绑定成功: %1").arg(info.title));
     } else {
         updateClickStatus("窗口绑定失败", true);
-        LOG_ERROR("WindowManager", "窗口绑定失败", "用户未选择有效窗口");
+        LOG_ERROR("InteractionFacade", "窗口绑定失败", "用户未选择有效窗口");
     }
 }
 
@@ -300,7 +466,7 @@ void MainWindow::onWindowSelectionChanged()
 
 void MainWindow::onStartColorPicker()
 {
-    if (!windowManager->isBound()) {
+    if (!interactionFacade->hasTargetWindow()) {
         LOG_ERROR("ColorPicker", "无法启动取色", "未绑定窗口");
         updateClickStatus("请先绑定一个窗口后再使用取色功能", true);
         return;
@@ -331,8 +497,8 @@ void MainWindow::onColorPicked(const QColor& color, const QPoint& position)
     
     // 记录取色日志
     QString windowInfo;
-    if (windowManager->isBound()) {
-        WindowInfo info = windowManager->getBoundWindowInfo();
+    if (interactionFacade->hasTargetWindow()) {
+        WindowInfo info = interactionFacade->getCurrentWindowInfo();
         windowInfo = QString("窗口: %1").arg(info.title);
     }
     LOG_COLOR_PICKED(color, position, windowInfo);
@@ -356,9 +522,9 @@ void MainWindow::onSimulateClick()
 {
     LOG_BUTTON_CLICK("执行点击", "尝试模拟点击");
     
-    if (!clickSimulator->hasTargetWindow()) {
+    if (!interactionFacade->hasTargetWindow()) {
         updateClickStatus("错误: 请先绑定一个窗口！", true);
-        LOG_ERROR("ClickSimulator", "点击模拟失败", "未绑定目标窗口");
+        LOG_ERROR("InteractionFacade", "点击模拟失败", "未绑定目标窗口");
         return;
     }
     
@@ -396,12 +562,12 @@ void MainWindow::onSimulateClick()
     QString buttonName = mouseButtonCombo->currentText();
     QString clickTypeName = clickType == ClickType::Double ? "双击" : "单击";
     
-    LOG_INFO("ClickSimulator", 
+    LOG_INFO("互动模拟器", 
         QString("尝试执行%1%2 - %3(%4, %5)")
             .arg(clickTypeName).arg(buttonName).arg(coordTypeName).arg(x).arg(y));
     
     // 执行点击
-    bool success = clickSimulator->click(x, y, coordType, button, clickType);
+    bool success = interactionFacade->mouseClick(QPoint(x, y), coordType, button, clickType);
     
     if (!success) {
         updateClickStatus("点击执行失败", true);
@@ -441,6 +607,118 @@ void MainWindow::onClickFailed(const QString& reason)
     LOG_ERROR("ClickSimulator", "点击模拟失败", reason);
 }
 
+// 键盘模拟相关槽函数
+void MainWindow::onSendKey()
+{
+    if (!interactionFacade->hasTargetWindow()) {
+        updateKeyStatus("错误: 请先绑定一个窗口！", true);
+        return;
+    }
+    
+    KeyCode key = static_cast<KeyCode>(keyCombo->currentData().toInt());
+    bool useCtrl = ctrlCheckBox->isChecked();
+    bool useAlt = altCheckBox->isChecked();
+    bool useShift = shiftCheckBox->isChecked();
+    
+    QString keyName = keyCombo->currentText();
+    QString modifiers;
+    if (useCtrl || useAlt || useShift) {
+        QStringList mods;
+        if (useCtrl) mods << "Ctrl";
+        if (useAlt) mods << "Alt";
+        if (useShift) mods << "Shift";
+        modifiers = mods.join("+") + "+";
+    }
+    
+    updateKeyStatus(QString("正在发送按键: %1%2...").arg(modifiers).arg(keyName));
+    
+    bool success = interactionFacade->sendKeyWithModifiers(key, useShift, useCtrl, useAlt);
+    
+    if (!success) {
+        updateKeyStatus("按键发送失败", true);
+    }
+}
+
+void MainWindow::onKeyExecuted(KeyCode key, const QString& modifiers)
+{
+    QString keyName;
+    // 获取按键名称的简单映射，这里可以根需要扩展
+    for (int i = 0; i < keyCombo->count(); ++i) {
+        if (keyCombo->itemData(i).toInt() == static_cast<int>(key)) {
+            keyName = keyCombo->itemText(i);
+            break;
+        }
+    }
+    
+    QString message = QString("✓ 成功发送按键: %1%2")
+        .arg(modifiers.isEmpty() ? "" : modifiers + "+")
+        .arg(keyName);
+    updateKeyStatus(message);
+}
+
+void MainWindow::onKeyFailed(const QString& reason)
+{
+    QString message = QString("✗ 按键发送失败: %1").arg(reason);
+    updateKeyStatus(message, true);
+}
+
+// 坐标显示相关槽函数
+void MainWindow::onCoordinateChanged(const QPoint& screenPos, const QPoint& windowPos, const QPoint& clientPos)
+{
+    QString coordText = QString("坐标信息:\n")
+                      + QString("屏幕坐标: (%1, %2)\n").arg(screenPos.x()).arg(screenPos.y())
+                      + QString("窗口坐标: (%1, %2)\n").arg(windowPos.x()).arg(windowPos.y())
+                      + QString("客户区坐标: (%1, %2)").arg(clientPos.x()).arg(clientPos.y());
+    
+    updateCoordinateDisplay(screenPos, windowPos, clientPos);
+}
+
+void MainWindow::onCoordinateCaptured(const QPoint& position, CoordinateType coordType)
+{
+    // 将捕获的坐标设置到点击坐标输入框
+    QString coordText = QString("%1,%2").arg(position.x()).arg(position.y());
+    clickPosEdit->setText(coordText);
+    
+    // 设置坐标类型
+    for (int i = 0; i < coordTypeCombo->count(); ++i) {
+        if (coordTypeCombo->itemData(i).toInt() == static_cast<int>(coordType)) {
+            coordTypeCombo->setCurrentIndex(i);
+            break;
+        }
+    }
+    
+    QString coordTypeName = coordTypeCombo->currentText();
+    coordinateStatusLabel->setText(QString("✓ 已捕获坐标: (%1, %2) - %3")
+                                 .arg(position.x()).arg(position.y()).arg(coordTypeName));
+    coordinateStatusLabel->setStyleSheet("QLabel { background-color: #d4edda; padding: 10px; border: 1px solid #c3e6cb; color: #155724; }");
+}
+
+void MainWindow::onToggleCoordinateDisplay()
+{
+    bool enabled = interactionFacade->isCoordinateDisplayEnabled();
+    
+    if (enabled) {
+        // 关闭坐标显示
+        interactionFacade->enableCoordinateDisplay(false);
+        toggleCoordinateButton->setText("开启坐标显示");
+        coordinateDisplayLabel->setText("坐标显示: 未开启");
+        coordinateStatusLabel->setText("坐标显示关闭，点击上方按钮开启");
+        coordinateStatusLabel->setStyleSheet("QLabel { background-color: #fff3cd; padding: 10px; border: 1px solid #ffeaa7; }");
+    } else {
+        // 开启坐标显示
+        if (!interactionFacade->hasTargetWindow()) {
+            updateKeyStatus("错误: 请先绑定一个窗口！", true);
+            return;
+        }
+        
+        interactionFacade->enableCoordinateDisplay(true);
+        toggleCoordinateButton->setText("关闭坐标显示");
+        coordinateStatusLabel->setText(QString("坐标显示已开启，在窗口内移动鼠标可看到坐标。按 %1 键捕获坐标")
+                                      .arg(captureKeyCombo->currentText()));
+        coordinateStatusLabel->setStyleSheet("QLabel { background-color: #d1ecf1; padding: 10px; border: 1px solid #bee5eb; color: #0c5460; }");
+    }
+}
+
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {
     if (colorPicker->isPicking() && event->button() == Qt::LeftButton) {
@@ -464,8 +742,9 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 void MainWindow::updateWindowInfo()
 {
     int index = windowComboBox->currentIndex();
-    if (index >= 0 && index < windowManager->getWindowCount()) {
-        WindowInfo info = windowManager->getWindowInfo(index);
+    const auto& windowList = interactionFacade->getWindowList();
+    if (index >= 0 && index < static_cast<int>(windowList.size())) {
+        const WindowInfo& info = windowList[index];
         QString infoText = QString("窗口信息:\n") +
                           QString("标题: %1\n").arg(info.title) +
                           QString("类名: %1\n").arg(info.className) +
@@ -506,6 +785,26 @@ void MainWindow::updateClickStatus(const QString& message, bool isError)
     }
 }
 
+void MainWindow::updateKeyStatus(const QString& message, bool isError)
+{
+    keyStatusLabel->setText(message);
+    if (isError) {
+        keyStatusLabel->setStyleSheet("QLabel { background-color: #ffe8e8; padding: 10px; border: 1px solid #ff4444; color: #cc0000; }");
+    } else {
+        keyStatusLabel->setStyleSheet("QLabel { background-color: #e8f5e8; padding: 10px; border: 1px solid #4CAF50; color: #2e7d32; }");
+    }
+}
+
+void MainWindow::updateCoordinateDisplay(const QPoint& screenPos, const QPoint& windowPos, const QPoint& clientPos)
+{
+    QString coordText = QString("坐标信息:\n")
+                      + QString("屏幕坐标: (%1, %2)\n").arg(screenPos.x()).arg(screenPos.y())
+                      + QString("窗口坐标: (%1, %2)\n").arg(windowPos.x()).arg(windowPos.y())
+                      + QString("客户区坐标: (%1, %2)").arg(clientPos.x()).arg(clientPos.y());
+    
+    coordinateDisplayLabel->setText(coordText);
+}
+
 QString MainWindow::formatColorInfo(const QColor& color, const QPoint& /* position */) const
 {
     return QString("颜色: RGB(%1, %2, %3) - %4")
@@ -517,7 +816,7 @@ QString MainWindow::formatColorInfo(const QColor& color, const QPoint& /* positi
 void MainWindow::onTabChanged(int index)
 {
     // 如果切换到预览页面，确保已绑定窗口
-    if (index == 1 && !windowManager->isBound()) { // 预览页面是第2个标签页
+    if (index == 1 && !interactionFacade->hasTargetWindow()) { // 预览页面是第2个标签页
         updateClickStatus("请先在窗口管理页面绑定一个窗口后再使用预览功能", true);
         LOG_INFO("MainWindow", "用户尝试访问预览页面但未绑定窗口");
         tabWidget->setCurrentIndex(0); // 跳回窗口管理页面

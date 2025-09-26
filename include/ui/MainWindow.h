@@ -16,9 +16,8 @@
 #include <QApplication>
 #include <QTabWidget>
 // 引入我们的核心模块
-#include "core/WindowManager.h"
+#include "core/InteractionFacade.h"
 #include "core/ColorPicker.h"
-#include "core/ClickSimulator.h"
 #include "ui/LogWindow.h"
 #include "ui/WindowPreviewPage.h"
 
@@ -50,6 +49,16 @@ private slots:
     void onClickExecuted(const QPoint& position, CoordinateType coordType, MouseButton button);
     void onClickFailed(const QString& reason);
     
+    // 键盘模拟
+    void onSendKey();
+    void onKeyExecuted(KeyCode key, const QString& modifiers);
+    void onKeyFailed(const QString& reason);
+    
+    // 坐标显示
+    void onCoordinateChanged(const QPoint& screenPos, const QPoint& windowPos, const QPoint& clientPos);
+    void onCoordinateCaptured(const QPoint& position, CoordinateType coordType);
+    void onToggleCoordinateDisplay();
+    
     // 标签页切换
     void onTabChanged(int index);
 
@@ -64,10 +73,9 @@ private:
     void setupPreviewPage();
     void setupLogPage();
     
-    // 核心模块
-    WindowManager* windowManager;
+    // 核心模块 - 使用新的架构
+    InteractionFacade* interactionFacade;
     ColorPicker* colorPicker;
-    ClickSimulator* clickSimulator;
     
     // 日志窗口
     LogWindow* logWindow;
@@ -109,10 +117,32 @@ private:
     QPushButton* bringToFrontButton;
     QLabel* clickStatusLabel;
     
+    // 键盘模拟区域
+    QGroupBox* keySimulatorGroup;
+    QComboBox* keyCombo;
+    QLineEdit* textEdit;
+    QCheckBox* ctrlCheckBox;
+    QCheckBox* altCheckBox;
+    QCheckBox* shiftCheckBox;
+    QPushButton* sendKeyButton;
+    QPushButton* sendTextButton;
+    QSpinBox* keyDelaySpinBox;
+    QLabel* keyStatusLabel;
+    
+    // 坐标显示区域
+    QGroupBox* coordinateGroup;
+    QLabel* coordinateDisplayLabel;
+    QPushButton* toggleCoordinateButton;
+    QLabel* captureKeyLabel;
+    QComboBox* captureKeyCombo;
+    QLabel* coordinateStatusLabel;
+    
     // 辅助方法
     void updateWindowInfo();
     void updateColorDisplay(const QColor& color, const QPoint& position);
     void updateClickStatus(const QString& message, bool isError = false);
+    void updateKeyStatus(const QString& message, bool isError = false);
+    void updateCoordinateDisplay(const QPoint& screenPos, const QPoint& windowPos, const QPoint& clientPos);
     QString formatColorInfo(const QColor& color, const QPoint& position) const;
     void connectSignals();
 };

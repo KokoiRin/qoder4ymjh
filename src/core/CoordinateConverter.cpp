@@ -1,0 +1,182 @@
+#include "core/CoordinateConverter.h"
+
+CoordinateConverter::CoordinateConverter(HWND targetWindow)
+    : targetWindow(targetWindow)
+{
+}
+
+void CoordinateConverter::setTargetWindow(HWND hwnd)
+{
+    targetWindow = hwnd;
+}
+
+HWND CoordinateConverter::getTargetWindow() const
+{
+    return targetWindow;
+}
+
+bool CoordinateConverter::hasValidWindow() const
+{
+    return targetWindow != nullptr && IsWindow(targetWindow) && IsWindowVisible(targetWindow);
+}
+
+QPoint CoordinateConverter::convertCoordinate(const QPoint& pos, CoordinateType fromType, CoordinateType toType) const
+{
+    if (!hasValidWindow() || fromType == toType) {
+        return pos;
+    }
+    
+    switch (fromType) {
+        case CoordinateType::Screen:
+            switch (toType) {
+                case CoordinateType::Window: return convertScreenToWindow(pos);
+                case CoordinateType::Client: return convertScreenToClient(pos);
+                default: return pos;
+            }
+        case CoordinateType::Window:
+            switch (toType) {
+                case CoordinateType::Screen: return convertWindowToScreen(pos);
+                case CoordinateType::Client: return convertWindowToClient(pos);
+                default: return pos;
+            }
+        case CoordinateType::Client:
+            switch (toType) {
+                case CoordinateType::Screen: return convertClientToScreen(pos);
+                case CoordinateType::Window: return convertClientToWindow(pos);
+                default: return pos;
+            }
+        default:
+            return pos;
+    }
+}
+
+QPoint CoordinateConverter::screenToWindow(const QPoint& screenPos) const
+{
+    return convertCoordinate(screenPos, CoordinateType::Screen, CoordinateType::Window);
+}
+
+QPoint CoordinateConverter::windowToScreen(const QPoint& windowPos) const
+{
+    return convertCoordinate(windowPos, CoordinateType::Window, CoordinateType::Screen);
+}
+
+QPoint CoordinateConverter::screenToClient(const QPoint& screenPos) const
+{
+    return convertCoordinate(screenPos, CoordinateType::Screen, CoordinateType::Client);
+}
+
+QPoint CoordinateConverter::clientToScreen(const QPoint& clientPos) const
+{
+    return convertCoordinate(clientPos, CoordinateType::Client, CoordinateType::Screen);
+}
+
+QPoint CoordinateConverter::windowToClient(const QPoint& windowPos) const
+{
+    return convertCoordinate(windowPos, CoordinateType::Window, CoordinateType::Client);
+}
+
+QPoint CoordinateConverter::clientToWindow(const QPoint& clientPos) const
+{
+    return convertCoordinate(clientPos, CoordinateType::Client, CoordinateType::Window);
+}
+
+bool CoordinateConverter::isPointInWindow(const QPoint& point, CoordinateType coordType) const
+{
+    if (!hasValidWindow()) {
+        return false;
+    }
+    
+    QPoint screenPoint = convertCoordinate(point, coordType, CoordinateType::Screen);
+    RECT windowRect;
+    GetWindowRect(targetWindow, &windowRect);
+    
+    return screenPoint.x() >= windowRect.left && screenPoint.x() <= windowRect.right &&
+           screenPoint.y() >= windowRect.top && screenPoint.y() <= windowRect.bottom;
+}
+
+bool CoordinateConverter::isPointInClient(const QPoint& point, CoordinateType coordType) const
+{
+    if (!hasValidWindow()) {
+        return false;
+    }
+    
+    QPoint clientPoint = convertCoordinate(point, coordType, CoordinateType::Client);
+    RECT clientRect;
+    GetClientRect(targetWindow, &clientRect);
+    
+    return clientPoint.x() >= 0 && clientPoint.x() <= clientRect.right &&
+           clientPoint.y() >= 0 && clientPoint.y() <= clientRect.bottom;
+}
+
+QRect CoordinateConverter::getWindowRect() const
+{
+    if (!hasValidWindow()) {
+        return QRect();
+    }
+    
+    RECT rect;
+    GetWindowRect(targetWindow, &rect);
+    return QRect(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
+}
+
+QRect CoordinateConverter::getClientRect() const
+{
+    if (!hasValidWindow()) {
+        return QRect();
+    }
+    
+    RECT rect;
+    GetClientRect(targetWindow, &rect);
+    return QRect(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
+}
+
+// 内部转换实现方法
+QPoint CoordinateConverter::convertScreenToWindow(const QPoint& screenPos) const
+{
+    RECT windowRect;
+    GetWindowRect(targetWindow, &windowRect);
+    return QPoint(screenPos.x() - windowRect.left, screenPos.y() - windowRect.top);
+}
+
+QPoint CoordinateConverter::convertWindowToScreen(const QPoint& windowPos) const
+{
+    RECT windowRect;
+    GetWindowRect(targetWindow, &windowRect);
+    return QPoint(windowRect.left + windowPos.x(), windowRect.top + windowPos.y());
+}
+
+QPoint CoordinateConverter::convertScreenToClient(const QPoint& screenPos) const
+{
+    POINT point = {screenPos.x(), screenPos.y()};
+    ScreenToClient(targetWindow, &point);
+    return QPoint(point.x, point.y);
+}
+
+QPoint CoordinateConverter::convertClientToScreen(const QPoint& clientPos) const
+{
+    POINT point = {clientPos.x(), clientPos.y()};
+    ClientToScreen(targetWindow, &point);
+    return QPoint(point.x, point.y);
+}
+
+QPoint CoordinateConverter::convertWindowToClient(const QPoint& windowPos) const
+{
+    RECT windowRect;
+    GetWindowRect(targetWindow, &windowRect);
+    POINT clientTopLeft = {0, 0};
+    ClientToScreen(targetWindow, &clientTopLeft);
+    int borderX = clientTopLeft.x - windowRect.left;
+    int borderY = clientTopLeft.y - windowRect.top;
+    return QPoint(windowPos.x() - borderX, windowPos.y() - borderY);
+}
+
+QPoint CoordinateConverter::convertClientToWindow(const QPoint& clientPos) const
+{
+    RECT windowRect;
+    GetWindowRect(targetWindow, &windowRect);
+    POINT clientTopLeft = {0, 0};
+    ClientToScreen(targetWindow, &clientTopLeft);
+    int borderX = clientTopLeft.x - windowRect.left;
+    int borderY = clientTopLeft.y - windowRect.top;
+    return QPoint(clientPos.x() + borderX, clientPos.y() + borderY);
+}

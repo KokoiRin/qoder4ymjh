@@ -15,10 +15,10 @@
 ########################
 
 //Path to a program.
-CMAKE_ADDR2LINE:FILEPATH=C:/Users/PC/scoop/apps/mingw/current/bin/addr2line.exe
+CMAKE_ADDR2LINE:FILEPATH=D:/Qt/Tools/mingw1310_64/bin/addr2line.exe
 
 //Path to a program.
-CMAKE_AR:FILEPATH=C:/Users/PC/scoop/apps/mingw/current/bin/ar.exe
+CMAKE_AR:FILEPATH=D:/Qt/Tools/mingw1310_64/bin/ar.exe
 
 //Choose the type of build, options are: None Debug Release RelWithDebInfo
 // MinSizeRel ...
@@ -28,7 +28,7 @@ CMAKE_BUILD_TYPE:STRING=
 CMAKE_COLOR_MAKEFILE:BOOL=ON
 
 //CXX compiler
-CMAKE_CXX_COMPILER:STRING=D:/Qt/Tools/mingw1310_64/bin/g++.exe
+CMAKE_CXX_COMPILER:FILEPATH=D:/Qt/Tools/mingw1310_64/bin/c++.exe
 
 //A wrapper around 'ar' adding the appropriate '--plugin' option
 // for the GCC compiler
@@ -42,22 +42,22 @@ CMAKE_CXX_COMPILER_RANLIB:FILEPATH=D:/Qt/Tools/mingw1310_64/bin/gcc-ranlib.exe
 CMAKE_CXX_FLAGS:STRING=
 
 //Flags used by the CXX compiler during DEBUG builds.
-CMAKE_CXX_FLAGS_DEBUG:STRING=
+CMAKE_CXX_FLAGS_DEBUG:STRING=-g
 
 //Flags used by the CXX compiler during MINSIZEREL builds.
-CMAKE_CXX_FLAGS_MINSIZEREL:STRING=
+CMAKE_CXX_FLAGS_MINSIZEREL:STRING=-Os -DNDEBUG
 
 //Flags used by the CXX compiler during RELEASE builds.
-CMAKE_CXX_FLAGS_RELEASE:STRING=
+CMAKE_CXX_FLAGS_RELEASE:STRING=-O3 -DNDEBUG
 
 //Flags used by the CXX compiler during RELWITHDEBINFO builds.
-CMAKE_CXX_FLAGS_RELWITHDEBINFO:STRING=
+CMAKE_CXX_FLAGS_RELWITHDEBINFO:STRING=-O2 -g -DNDEBUG
 
 //Libraries linked by default with all C++ applications.
 CMAKE_CXX_STANDARD_LIBRARIES:STRING=-lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
 
 //C compiler
-CMAKE_C_COMPILER:STRING=D:/Qt/Tools/mingw1310_64/bin/gcc.exe
+CMAKE_C_COMPILER:FILEPATH=D:/Qt/Tools/mingw1310_64/bin/gcc.exe
 
 //A wrapper around 'ar' adding the appropriate '--plugin' option
 // for the GCC compiler
@@ -71,22 +71,22 @@ CMAKE_C_COMPILER_RANLIB:FILEPATH=D:/Qt/Tools/mingw1310_64/bin/gcc-ranlib.exe
 CMAKE_C_FLAGS:STRING=
 
 //Flags used by the C compiler during DEBUG builds.
-CMAKE_C_FLAGS_DEBUG:STRING=
+CMAKE_C_FLAGS_DEBUG:STRING=-g
 
 //Flags used by the C compiler during MINSIZEREL builds.
-CMAKE_C_FLAGS_MINSIZEREL:STRING=
+CMAKE_C_FLAGS_MINSIZEREL:STRING=-Os -DNDEBUG
 
 //Flags used by the C compiler during RELEASE builds.
-CMAKE_C_FLAGS_RELEASE:STRING=
+CMAKE_C_FLAGS_RELEASE:STRING=-O3 -DNDEBUG
 
 //Flags used by the C compiler during RELWITHDEBINFO builds.
-CMAKE_C_FLAGS_RELWITHDEBINFO:STRING=
+CMAKE_C_FLAGS_RELWITHDEBINFO:STRING=-O2 -g -DNDEBUG
 
 //Libraries linked by default with all C applications.
 CMAKE_C_STANDARD_LIBRARIES:STRING=-lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
 
 //Path to a program.
-CMAKE_DLLTOOL:FILEPATH=C:/Users/PC/scoop/apps/mingw/current/bin/dlltool.exe
+CMAKE_DLLTOOL:FILEPATH=D:/Qt/Tools/mingw1310_64/bin/dlltool.exe
 
 //Flags used by the linker during all build types.
 CMAKE_EXE_LINKER_FLAGS:STRING=
@@ -161,10 +161,10 @@ CMAKE_INSTALL_SHAREDSTATEDIR:PATH=com
 CMAKE_INSTALL_SYSCONFDIR:PATH=etc
 
 //Path to a program.
-CMAKE_LINKER:FILEPATH=C:/Users/PC/scoop/apps/mingw/current/bin/ld.exe
+CMAKE_LINKER:FILEPATH=D:/Qt/Tools/mingw1310_64/bin/ld.exe
 
 //Path to a program.
-CMAKE_MAKE_PROGRAM:FILEPATH=C:/Users/PC/scoop/apps/mingw/current/bin/mingw32-make.exe
+CMAKE_MAKE_PROGRAM:FILEPATH=D:/Qt/Tools/mingw1310_64/bin/mingw32-make.exe
 
 //Flags used by the linker during the creation of modules during
 // all build types.
@@ -187,13 +187,13 @@ CMAKE_MODULE_LINKER_FLAGS_RELEASE:STRING=
 CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 
 //Path to a program.
-CMAKE_NM:FILEPATH=C:/Users/PC/scoop/apps/mingw/current/bin/nm.exe
+CMAKE_NM:FILEPATH=D:/Qt/Tools/mingw1310_64/bin/nm.exe
 
 //Path to a program.
-CMAKE_OBJCOPY:FILEPATH=C:/Users/PC/scoop/apps/mingw/current/bin/objcopy.exe
+CMAKE_OBJCOPY:FILEPATH=D:/Qt/Tools/mingw1310_64/bin/objcopy.exe
 
 //Path to a program.
-CMAKE_OBJDUMP:FILEPATH=C:/Users/PC/scoop/apps/mingw/current/bin/objdump.exe
+CMAKE_OBJDUMP:FILEPATH=D:/Qt/Tools/mingw1310_64/bin/objdump.exe
 
 //Value Computed by CMake
 CMAKE_PROJECT_COMPAT_VERSION:STATIC=
@@ -223,10 +223,10 @@ CMAKE_PROJECT_VERSION_PATCH:STATIC=
 CMAKE_PROJECT_VERSION_TWEAK:STATIC=
 
 //Path to a program.
-CMAKE_RANLIB:FILEPATH=C:/Users/PC/scoop/apps/mingw/current/bin/ranlib.exe
+CMAKE_RANLIB:FILEPATH=D:/Qt/Tools/mingw1310_64/bin/ranlib.exe
 
 //RC compiler
-CMAKE_RC_COMPILER:FILEPATH=C:/Users/PC/scoop/apps/mingw/current/bin/windres.exe
+CMAKE_RC_COMPILER:FILEPATH=D:/Qt/Tools/mingw1310_64/bin/windres.exe
 
 //Flags for Windows Resource Compiler during all build types.
 CMAKE_RC_FLAGS:STRING=
@@ -244,7 +244,7 @@ CMAKE_RC_FLAGS_RELEASE:STRING=
 CMAKE_RC_FLAGS_RELWITHDEBINFO:STRING=
 
 //Path to a program.
-CMAKE_READELF:FILEPATH=C:/Users/PC/scoop/apps/mingw/current/bin/readelf.exe
+CMAKE_READELF:FILEPATH=D:/Qt/Tools/mingw1310_64/bin/readelf.exe
 
 //Flags used by the linker during the creation of shared libraries
 // during all build types.
@@ -294,7 +294,7 @@ CMAKE_STATIC_LINKER_FLAGS_RELEASE:STRING=
 CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 
 //Path to a program.
-CMAKE_STRIP:FILEPATH=C:/Users/PC/scoop/apps/mingw/current/bin/strip.exe
+CMAKE_STRIP:FILEPATH=D:/Qt/Tools/mingw1310_64/bin/strip.exe
 
 //Path to a program.
 CMAKE_TAPI:FILEPATH=CMAKE_TAPI-NOTFOUND

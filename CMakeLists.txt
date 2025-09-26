@@ -24,6 +24,11 @@ set(SOURCES
     src/core/WindowManager.cpp
     src/core/ColorPicker.cpp
     src/core/ClickSimulator.cpp
+    src/core/InteractionFacade.cpp
+    src/core/CoordinateConverter.cpp
+    src/core/MouseSimulator.cpp
+    src/core/KeyboardSimulator.cpp
+    src/core/CoordinateDisplay.cpp
     src/utils/AsyncLogger.cpp
 )
 
@@ -34,6 +39,12 @@ set(HEADERS
     include/core/WindowManager.h
     include/core/ColorPicker.h
     include/core/ClickSimulator.h
+    include/core/InteractionFacade.h
+    include/core/CoordinateConverter.h
+    include/core/MouseSimulator.h
+    include/core/KeyboardSimulator.h
+    include/core/CoordinateDisplay.h
+    include/core/CommonTypes.h
     include/utils/AsyncLogger.h
 )
 
