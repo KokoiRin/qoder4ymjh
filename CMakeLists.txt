@@ -49,9 +49,15 @@ set(HEADERS
 )
 
 # 添加可执行文件
+set(RESOURCE_FILES "")
+if(WIN32)
+    set(RESOURCE_FILES QtDemo.rc)
+endif()
+
 add_executable(QtDemo
     ${SOURCES}
     ${HEADERS}
+    ${RESOURCE_FILES}
 )
 
 # 链接Qt库
@@ -62,6 +68,21 @@ if(WIN32)
     set_target_properties(QtDemo PROPERTIES
         WIN32_EXECUTABLE TRUE
     )
+    
+    # MinGW特定设置：嵌入管理员权限清单
+    if(MINGW)
+        # 使用管理员权限子系统标志
+        set_target_properties(QtDemo PROPERTIES
+            LINK_FLAGS "-Wl,--subsystem,windows"
+        )
+        
+        # 添加自定义命令来嵌入清单
+        add_custom_command(TARGET QtDemo POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E echo "正在尝试嵌入管理员权限清单..."
+            COMMENT "嵌入清单文件"
+        )
+    endif()
+    
     # 链接Windows API库
     target_link_libraries(QtDemo user32 gdi32)
 endif()

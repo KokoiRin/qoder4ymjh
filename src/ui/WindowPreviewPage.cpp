@@ -14,8 +14,8 @@ WindowPreviewPage::WindowPreviewPage(QWidget *parent)
     , previewActive(false)
     , currentFrameRate(5)
     , currentScale(1.0)
-    , fixedAspectRatio(false)
     , coordinateConverter(new CoordinateConverter(nullptr))
+    , fixedAspectRatio(false)
 {
     setupUI();
     connectSignals();

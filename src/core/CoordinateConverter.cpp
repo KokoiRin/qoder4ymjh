@@ -1,4 +1,5 @@
 #include "core/CoordinateConverter.h"
+#include <QDebug>
 
 CoordinateConverter::CoordinateConverter(HWND targetWindow)
     : targetWindow(targetWindow)
@@ -17,7 +18,9 @@ HWND CoordinateConverter::getTargetWindow() const
 
 bool CoordinateConverter::hasValidWindow() const
 {
-    return targetWindow != nullptr && IsWindow(targetWindow) && IsWindowVisible(targetWindow);
+    // 修复：去除IsWindowVisible检查，允许对最小化窗口进行操作
+    // IsWindowVisible会导致最小化的窗口被认为无效
+    return targetWindow != nullptr && IsWindow(targetWindow);
 }
 
 QPoint CoordinateConverter::convertCoordinate(const QPoint& pos, CoordinateType fromType, CoordinateType toType) const
@@ -122,12 +125,24 @@ QRect CoordinateConverter::getWindowRect() const
 QRect CoordinateConverter::getClientRect() const
 {
     if (!hasValidWindow()) {
+        qDebug() << "getClientRect: 窗口无效";
         return QRect();
     }
     
     RECT rect;
-    GetClientRect(targetWindow, &rect);
-    return QRect(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
+    BOOL result = GetClientRect(targetWindow, &rect);
+    if (!result) {
+        DWORD error = GetLastError();
+        qDebug() << QString("getClientRect: GetClientRect调用失败, 错误码: %1").arg(error);
+        return QRect();
+    }
+    
+    QRect clientRect(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
+    qDebug() << QString("getClientRect: 成功获取客户区 (%1, %2, %3, %4)")
+                  .arg(clientRect.x()).arg(clientRect.y())
+                  .arg(clientRect.width()).arg(clientRect.height());
+    
+    return clientRect;
 }
 
 QRect CoordinateConverter::getClientAreaInWindow() const
