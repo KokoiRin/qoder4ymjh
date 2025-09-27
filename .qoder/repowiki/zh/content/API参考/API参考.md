@@ -1,23 +1,48 @@
+<docs>
+# API参考
+
 <cite>
 **本文档中引用的文件**
-- [MainWindow.h](file://include/ui/MainWindow.h)
-- [MainWindow.cpp](file://src/ui/MainWindow.cpp)
-- [WindowManager.h](file://include/core/WindowManager.h)
-- [WindowManager.cpp](file://src/core/WindowManager.cpp)
-- [ColorPicker.h](file://include/core/ColorPicker.h)
-- [ColorPicker.cpp](file://src/core/ColorPicker.cpp)
-- [ClickSimulator.h](file://include/core/ClickSimulator.h)
-- [ClickSimulator.cpp](file://src/core/ClickSimulator.cpp)
+- [MainWindow.h](file://include/ui/MainWindow.h) - *更新了私有槽函数*
+- [MainWindow.cpp](file://src/ui/MainWindow.cpp) - *实现了新的信号连接逻辑*
+- [WindowManager.h](file://include/core/WindowManager.h) - *增加了窗口信息获取方法*
+- [WindowManager.cpp](file://src/core/WindowManager.cpp) - *完善了窗口枚举逻辑*
+- [ColorPicker.h](file://include/core/ColorPicker.h) - *新增取色状态查询功能*
+- [ColorPicker.cpp](file://src/core/ColorPicker.cpp) - *优化了颜色更新机制*
+- [ClickSimulator.h](file://include/core/ClickSimulator.h) - *扩展了鼠标和键盘模拟接口*
+- [ClickSimulator.cpp](file://src/core/ClickSimulator.cpp) - *实现了坐标显示与捕获功能*
+- [InteractionFacade.h](file://include/core/InteractionFacade.h) - *新增统一操作门面类*
+- [InteractionFacade.cpp](file://src/core/InteractionFacade.cpp) - *实现模块间依赖管理*
+- [CommonTypes.h](file://include/core/CommonTypes.h) - *定义核心枚举类型*
 </cite>
 
-# API参考
+## 更新摘要
+**已修改内容**
+- 根据代码重构，更新MainWindow类对InteractionFacade的使用方式
+- 补充WindowManager类新增的窗口信息查询方法文档
+- 完善ColorPicker类关于取色状态控制的说明
+- 扩展ClickSimulator类的鼠标点击与键盘模拟API描述
+- 新增InteractionFacade统一操作门面类的完整文档
+
+**新增部分**
+- InteractionFacade类API文档
+- 坐标显示与捕获功能说明
+- 键盘组合键模拟功能
+
+**废弃内容**
+- 无
+
+**来源追踪系统更新**
+- 添加InteractionFacade相关源文件引用
+- 更新各模块间的依赖关系说明
 
 ## 目录
 1. [MainWindow类API](#mainwindow类api)
 2. [WindowManager类API](#windowmanager类api)
 3. [ColorPicker类API](#colorpicker类api)
 4. [ClickSimulator类API](#clicksimulator类api)
-5. [枚举类型定义](#枚举类型定义)
+5. [InteractionFacade类API](#interactionfacade类api)
+6. [枚举类型定义](#枚举类型定义)
 
 ## MainWindow类API
 
@@ -26,7 +51,7 @@
 #### MainWindow(QWidget *parent = nullptr)
 - **所属类**: MainWindow
 - **访问级别**: public
-- **作用**: 构造主窗口实例，初始化UI界面和核心模块（窗口管理器、取色器、点击模拟器）。
+- **作用**: 构造主窗口实例，初始化UI界面和核心模块（交互门面、取色器、日志窗口）。
 - **参数含义**:
   - `parent`: 父级QWidget指针，用于Qt对象树管理，默认为nullptr。
 - **触发条件**: 当创建MainWindow对象时自动调用。
@@ -53,7 +78,7 @@
 - **访问级别**: private slots
 - **作用**: 刷新可用窗口列表，更新下拉框内容，并显示当前选中窗口的信息。
 - **参数**: 无
-- **触发条件**: 用户点击“刷新列表”按钮时触发。
+- **触发条件**: 用户点击"刷新列表"按钮时触发。
 - **线程安全性**: 安全，运行于主线程。
 - **异常行为**: 若系统API调用失败，可能无法获取完整窗口列表。
 
@@ -64,7 +89,7 @@
 - **访问级别**: private slots
 - **作用**: 将应用绑定到用户从下拉框中选择的目标窗口，使后续操作针对该窗口进行。
 - **参数**: 无
-- **触发条件**: 用户点击“绑定窗口”按钮时触发。
+- **触发条件**: 用户点击"绑定窗口"按钮时触发。
 - **线程安全性**: 安全，运行于主线程。
 - **异常行为**: 若未选择有效窗口或目标窗口无效，则弹出警告对话框并记录错误日志。
 
@@ -75,7 +100,7 @@
 - **访问级别**: private slots
 - **作用**: 启动或停止颜色拾取模式。启动后鼠标变为十字光标，可实时跟踪颜色变化；点击则捕获当前像素颜色。
 - **参数**: 无
-- **触发条件**: 用户点击“开始取色”按钮或按下ESC键时触发。
+- **触发条件**: 用户点击"开始取色"按钮或按下ESC键时触发。
 - **线程安全性**: 安全，运行于主线程。
 - **异常行为**: 若未绑定任何窗口，则弹出警告提示。
 
@@ -86,14 +111,14 @@
 - **访问级别**: private slots
 - **作用**: 解析用户输入的坐标和设置，执行一次鼠标点击模拟操作。
 - **参数**: 无
-- **触发条件**: 用户点击“执行点击”按钮时触发。
+- **触发条件**: 用户点击"执行点击"按钮时触发。
 - **线程安全性**: 安全，运行于主线程。
 - **异常行为**: 若未绑定目标窗口、坐标格式错误或解析失败，则显示错误状态并记录日志。
 
 [SPEC SYMBOL](file://include/ui/MainWindow.h#L48-L49)
 
 **Section sources**
-- [MainWindow.h](file://include/ui/MainWindow.h#L23-L106)
+- [MainWindow.h](file://include/ui/MainWindow.h#L23-L147)
 - [MainWindow.cpp](file://src/ui/MainWindow.cpp#L100-L150)
 
 ## WindowManager类API
@@ -211,125 +236,4 @@
   - `colorChanged`: 在连续取色模式下，当鼠标移动导致颜色或位置变化时发射。
   - `colorPicked`: 当用户主动捕获颜色（如点击）时发射。
 - **参数**:
-  - `color`: 当前获取到的QColor对象。
-  - `position`: 颜色对应的屏幕坐标QPoint。
-- **发射时机**:
-  - `colorChanged`: `updateColor()`私有槽函数检测到变化时。
-  - `colorPicked`: 调用`pickColorAtCursor()`或用户交互触发时。
-- **线程安全性**: Qt信号槽跨线程需注意连接方式，默认队列连接安全。
-- **异常行为**: 无。
-
-[SPEC SYMBOL](file://include/core/ColorPicker.h#L36-L39)
-
-**Section sources**
-- [ColorPicker.h](file://include/core/ColorPicker.h#L12-L56)
-- [ColorPicker.cpp](file://src/core/ColorPicker.cpp#L20-L125)
-
-## ClickSimulator类API
-
-### click 方法重载
-- **所属类**: ClickSimulator
-- **访问级别**: public
-- **作用**: 执行一次鼠标点击操作，支持多种坐标表示形式和按键类型。
-- **重载形式**:
-  1. `click(const QPoint&, CoordinateType, MouseButton, ClickType)`
-  2. `click(int x, int y, CoordinateType, MouseButton, ClickType)`
-- **参数**:
-  - 坐标相关：支持QPoint或分离的x/y整数。
-  - `coordType`: 坐标类型（屏幕/窗口/客户区）。
-  - `button`: 按键类型（左/右/中键）。
-  - `clickType`: 单击或双击。
-- **返回值**: bool —— 成功发送消息返回true，否则false。
-- **触发条件**: 显式调用此方法时。
-- **线程安全性**: 使用`QThread::msleep`进行延迟，非完全异步，阻塞调用线程。
-- **异常行为**: 若无目标窗口则发出`clickFailed`信号并返回false。
-
-[SPEC SYMBOL](file://include/core/ClickSimulator.h#L50-L65)
-
-### 坐标类型枚举值意义
-- **所属类**: 全局枚举
-- **访问级别**: public
-- **定义**:
-  - `CoordinateType::Screen`: 屏幕绝对坐标，原点在左上角。
-  - `CoordinateType::Window`: 相对于窗口左上角的坐标（包含标题栏和边框）。
-  - `CoordinateType::Client`: 相对于客户区（工作区）左上角的坐标。
-- **用途**: 在`click`、`mouseDown/up`等方法中指定坐标解释方式。
-
-[SPEC SYMBOL](file://include/core/ClickSimulator.h#L21-L25)
-
-### 鼠标按键支持种类
-- **所属类**: 全局枚举
-- **访问级别**: public
-- **定义** (`MouseButton`):
-  - `Left`: 左键
-  - `Right`: 右键
-  - `Middle`: 中键
-- **用途**: 指定点击操作使用的鼠标按键。
-
-[SPEC SYMBOL](file://include/core/ClickSimulator.h#L10-L14)
-
-### 双击与延迟设置机制
-- **所属类**: ClickSimulator
-- **访问级别**: public
-- **方法**:
-  - `setClickDelay(int ms)`: 设置单次点击中“按下”与“释放”之间的延迟。
-  - `setDoubleClickInterval(int ms)`: 设置两次单击构成双击的时间间隔。
-- **默认值**: 分别为50ms和200ms。
-- **实现**: 内部通过`PostMessage`发送WM_LBUTTONDOWN/RBUTTONDOWN等消息，并使用`QThread::msleep`实现精确延迟。
-- **触发条件**: 显式调用setter方法或构造函数初始化时。
-
-[SPEC SYMBOL](file://include/core/ClickSimulator.h#L84-L91)
-
-### clickExecuted / clickFailed 信号
-- **所属类**: ClickSimulator
-- **访问级别**: signals
-- **作用**:
-  - `clickExecuted`: 点击成功执行后发射，用于通知UI更新状态。
-  - `clickFailed`: 点击因各种原因失败时发射，携带失败原因字符串。
-- **数据传递格式**:
-  - `clickExecuted`: `(const QPoint& position, CoordinateType coordType, MouseButton button)`
-  - `clickFailed`: `(const QString& reason)` —— 失败原因描述。
-- **发射时机**:
-  - `clickExecuted`: `click`方法成功完成所有消息发送后。
-  - `clickFailed`: 目标无效、消息发送失败等情况发生时。
-- **线程安全性**: 信号由主线程发出，接收槽函数应处理相应线程上下文。
-
-[SPEC SYMBOL](file://include/core/ClickSimulator.h#L94-L96)
-
-**Section sources**
-- [ClickSimulator.h](file://include/core/ClickSimulator.h#L27-L96)
-- [ClickSimulator.cpp](file://src/core/ClickSimulator.cpp#L20-L287)
-
-## 枚举类型定义
-
-### MouseButton
-- **定义文件**: ClickSimulator.h
-- **成员**:
-  - `Left`: 表示鼠标左键。
-  - `Right`: 表示鼠标右键。
-  - `Middle`: 表示鼠标中键。
-- **用途**: 在点击模拟操作中指定具体按键。
-
-[SPEC SYMBOL](file://include/core/ClickSimulator.h#L10-L14)
-
-### ClickType
-- **定义文件**: ClickSimulator.h
-- **成员**:
-  - `Single`: 单次点击。
-  - `Double`: 双击操作。
-- **用途**: 区分点击操作的类型，在`click`方法中作为参数传入。
-
-[SPEC SYMBOL](file://include/core/ClickSimulator.h#L16-L19)
-
-### CoordinateType
-- **定义文件**: ClickSimulator.h
-- **成员**:
-  - `Screen`: 屏幕绝对坐标系。
-  - `Window`: 窗口相对坐标系（相对于窗口左上角）。
-  - `Client`: 客户区相对坐标系（相对于客户区左上角）。
-- **用途**: 明确坐标参数的参考基准，确保正确转换为目标窗口的客户区坐标。
-
-[SPEC SYMBOL](file://include/core/ClickSimulator.h#L21-L25)
-
-**Section sources**
-- [ClickSimulator.h](file://include/core/ClickSimulator.h#L10-L25)
+  - `color`: 当前获取
