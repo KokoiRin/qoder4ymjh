@@ -1,105 +1,102 @@
-# Qt桌面自动化工具
+# QtDemo Project
 
-一个基于Qt C++开发的Windows桌面自动化工具，提供窗口管理、颜色拾取、鼠标点击模拟和键盘按键模拟功能。
+这是一个基于Qt6的C++桌面应用程序项目，提供了窗口操作、颜色拾取和鼠标点击模拟功能。
 
 ## 项目架构
 
-### 总体设计
-本项目采用**类MVC架构模式**，将应用程序划分为三个逻辑层次：
-- **View（视图层）**：MainWindow等UI类负责界面展示
-- **Controller（控制层）**：MainWindow同时承担控制器角色，处理用户交互
-- **Model（模型层）**：WindowManager、ColorPicker、ClickSimulator三个核心模块
+### 整体设计
+本项目采用**外观模式(Facade Pattern)架构**，通过InteractionFacade统一封装所有核心功能模块：
+- **视图层（View）**：基于Qt Widgets的用户界面层，包括MainWindow、LogWindow、WindowPreviewPage
+- **外观层（Facade）**：InteractionFacade作为统一入口，封装并协调所有核心模块
+- **核心模块（Core）**：独立的功能模块，各司其职，分别处理窗口管理、颜色拾取、坐标转换、鼠标模拟和键盘模拟
 
-### 目录结构
+### 架构图
+```mermaid
+graph TD
+    UI[用户界面层<br/>MainWindow] --> Facade[InteractionFacade<br/>外观统一入口]
+    
+    subgraph Core[核心模块层]
+        WM[WindowManager<br/>窗口管理]
+        CP[ColorPicker<br/>颜色拾取] 
+        CC[CoordinateConverter<br/>坐标转换]
+        MS[MouseSimulator<br/>鼠标模拟]
+        KS[KeyboardSimulator<br/>键盘模拟]
+        CD[CoordinateDisplay<br/>坐标显示]
+    end
+    
+    Facade --> WM
+    Facade --> CP
+    Facade --> CC
+    Facade --> MS
+    Facade --> KS  
+    Facade --> CD
+    
+    Core --> OS[系统调用层<br/>Windows API]
 ```
-d:\ws\new\
-├── include/                # 头文件目录
-│   ├── core/              # 核心功能模块头文件
-│   │   ├── WindowManager.h      # 窗口管理器
-│   │   ├── ColorPicker.h        # 颜色拾取器
-│   │   └── ClickSimulator.h     # 点击和键盘模拟器
-│   ├── ui/                # 用户界面头文件
-│   │   ├── MainWindow.h         # 主窗口
-│   │   ├── LogWindow.h          # 日志窗口
-│   │   └── WindowPreviewPage.h  # 窗口预览页面
-│   └── utils/             # 工具类头文件
-│       └── AsyncLogger.h        # 异步日志记录器
-├── src/                   # 源文件目录
-│   ├── core/              # 核心功能模块实现
-│   ├── ui/                # 用户界面实现
-│   ├── utils/             # 工具类实现
-│   └── main.cpp           # 程序入口
-├── CMakeLists.txt         # CMake构建配置
-├── build-qt.bat           # Qt工具链构建脚本
-└── README.md              # 项目说明文档
-```
 
-### 核心模块
+## 核心模块
 
-#### 1. WindowManager - 窗口管理器
+### 1. InteractionFacade - 交互外观
+- **职责**：作为所有用户交互功能的统一入口点
+- **设计模式**：外观模式，封装了五个核心模块的复杂性
+- **主要接口**：
+  - 窗口管理：`refreshWindowList()`, `bindWindow()`, `hasTargetWindow()`
+  - 鼠标操作：`leftClick()`, `rightClick()`, `doubleClick()`, `mouseClick()`
+  - 键盘操作：`sendKey()`, `sendKeyWithModifiers()`, `sendText()`
+  - 坐标功能：`enableCoordinateDisplay()`, `convertCoordinate()`
+
+### 2. WindowManager - 窗口管理器
 - **职责**：系统窗口的枚举和管理
-- **功能**：
-  - 枚举系统中所有可见窗口
-  - 绑定目标窗口（通过HWND句柄）
-  - 获取窗口信息（标题、位置、大小等）
-  - 使用Windows API进行窗口操作
+- **主要接口**：
+  - `refreshWindowList()` - 刷新窗口列表
+  - `bindWindow(int index)` - 绑定指定窗口
+  - `getWindowList()` - 获取窗口列表
+  - `getBoundWindow()` - 获取当前绑定窗口
+  - `bringWindowToFront()` - 将窗口置于前台
 
-#### 2. ColorPicker - 颜色拾取器
+### 3. ColorPicker - 颜色拾取器
 - **职责**：实时屏幕颜色获取
-- **功能**：
-  - 通过QTimer定时器周期性捕获鼠标位置颜色
-  - 检测颜色变化并发出信号通知
-  - 提供开始/停止取色功能
-  - 默认50ms更新间隔以平衡性能和实时性
+- **主要接口**：
+  - `startPicking()` / `stopPicking()` - 开始/停止取色
+  - `getColorAt(QPoint)` - 获取指定位置颜色
+  - `getCurrentCursorColor()` - 获取当前光标位置颜色
+  - `setUpdateInterval(int)` - 设置更新间隔
+- **信号**：`colorChanged()`, `colorPicked()`, `pickingStarted()`, `pickingStopped()`
 
-#### 3. ClickSimulator - 点击和键盘模拟器
-- **职责**：模拟鼠标点击和键盘按键操作
-- **功能**：
-  - **鼠标模拟**：
-    - 支持多种坐标类型（屏幕坐标、窗口坐标、客户区坐标）
-    - 使用SendMessage API实现后台点击
-    - 支持左键、右键、中键点击
-    - 支持单击和双击
-  - **键盘模拟**：
-    - 支持单个按键和组合键（Ctrl+, Alt+, Shift+）
-    - 使用SendMessage API实现后台按键
-    - 支持文本输入功能
-    - 提供紧急释放所有按键功能
-  - **坐标显示**：
-    - 实时显示鼠标在目标窗口内的坐标
-    - 支持快捷键（默认F9）捕获坐标到输入框
-    - 同时显示屏幕坐标、窗口坐标、客户区坐标
+### 4. CoordinateConverter - 坐标转换器  
+- **职责**：处理不同坐标系之间的转换
+- **主要接口**：
+  - `convertCoordinate(QPoint, fromType, toType)` - 通用坐标转换
+  - `screenToClient(QPoint)` - 屏幕坐标转客户区坐标
+  - `clientToScreen(QPoint)` - 客户区坐标转屏幕坐标
+  - `getWindowRect()` / `getClientRect()` - 获取窗口区域信息
 
-#### 4. MainWindow - 主控制中心
-- **职责**：作为应用程序的主窗口和控制中枢
-- **功能**：
-  - UI界面构建和布局管理
-  - 用户交互事件处理
-  - 协调各个核心模块的工作
-  - 通过Qt信号槽机制与模型层通信
+### 5. MouseSimulator - 鼠标模拟器
+- **职责**：模拟鼠标点击操作
+- **主要接口**：
+  - `mouseClick(QPoint, coordType, button, clickType)` - 通用点击接口
+  - `leftClick()` / `rightClick()` / `doubleClick()` - 便捷点击接口
+  - `setClickDelay(int)` - 设置点击延迟
+  - `setDoubleClickInterval(int)` - 设置双击间隔
+- **信号**：`mouseClickExecuted()`, `mouseClickFailed()`
 
-### 技术特点
+### 6. KeyboardSimulator - 键盘模拟器
+- **职责**：模拟键盘按键操作
+- **主要接口**：
+  - `keyPress(KeyCode)` - 单个按键
+  - `keyPressWithModifiers(KeyCode, shift, ctrl, alt)` - 组合键
+  - `sendText(QString)` - 发送文本
+  - `sendCtrlKey()` / `sendAltKey()` / `sendShiftKey()` - 便捷组合键
+- **信号**：`keyExecuted()`, `keyFailed()`
 
-#### 1. 模块化设计
-- 各模块职责清晰，功能独立
-- 模块间通过组合关系而非继承关系连接
-- 便于维护和扩展
-
-#### 2. 松耦合通信
-- 使用Qt信号槽机制实现模块间通信
-- 避免了直接的函数调用依赖
-- 提高了代码的可维护性
-
-#### 3. 后台操作
-- 使用Windows SendMessage API而非PostMessage
-- 支持窗口在后台或最小化状态下的操作
-- 确保操作的可靠性和同步性
-
-#### 4. 异步处理
-- 包含AsyncLogger异步日志系统
-- ColorPicker使用定时器进行异步颜色监测
-- ClickSimulator支持坐标实时显示
-- 提升了应用程序的响应性
+### 7. CoordinateDisplay - 坐标显示器
+- **职责**：实时坐标显示和捕获
+- **主要接口**：
+  - `enableDisplay(bool)` - 开启/关闭坐标显示
+  - `setUpdateInterval(int)` - 设置更新间隔
+  - `setCoordinateCaptureKey(int)` - 设置捕获快捷键
+  - `getCurrentMousePosition()` - 获取当前鼠标位置
+- **信号**：`coordinateChanged()`, `coordinateCaptured()`
 
 ## 构建与运行
 
@@ -107,36 +104,41 @@ d:\ws\new\
 - Qt 6.9.2 (MinGW 64-bit)
 - CMake 3.16+
 - MinGW-w64 13.1.0
+- Windows 10/11
 
 ### 构建步骤
-```bash
-# 使用提供的Qt工具链构建脚本
-.\build-qt.bat
 
-# 或手动构建
-mkdir cmake-build-debug
-cd cmake-build-debug
-cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="D:/Qt/6.9.2/mingw_64"
-cmake --build . --config Debug
+#### 使用提供的构建脚本（推荐）
+```bash
+# 直接运行构建脚本
+.\build-qt.bat
 ```
 
-### 运行
-构建成功后，可执行文件位于：`d:\ws\out\QtDemo.exe`
+#### 手动构建
+```bash
+# 1. 创建构建目录
+mkdir cmake-build-debug
+cd cmake-build-debug
 
-## 使用说明
+# 2. 配置环境变量
+set PATH=D:\Qt\Tools\mingw1310_64\bin;%PATH%
+set CMAKE_PREFIX_PATH=D:/Qt/6.9.2/mingw_64
+set Qt6_DIR=D:/Qt/6.9.2/mingw_64/lib/cmake/Qt6
 
-1. **窗口绑定**：首先选择并绑定一个目标窗口
-2. **颜色拾取**：点击"开始取色"按钮，移动鼠标获取颜色信息
-3. **鼠标模拟**：输入坐标，选择按键类型和坐标类型，点击"执行点击"
-4. **键盘模拟**：选择要发送的按键，可选择修饰键，点击"发送按键"或输入文本点击"发送文本"
-5. **坐标显示**：开启坐标显示后，在目标窗口内移动鼠标可看到实时坐标，按F9键捕获当前坐标
-6. **紧急功能**：如果键盘按键卡住，点击"紧急释放所有按键"按钮
+# 3. 生成构建文件
+cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="D:/Qt/6.9.2/mingw_64"
 
-## 项目特色
+# 4. 编译项目
+mingw32-make
+```
 
-- ✅ **后台操作**：支持窗口在后台或最小化状态下的自动化操作
-- ✅ **多坐标系统**：支持屏幕坐标、窗口坐标、客户区坐标的转换和使用
-- ✅ **实时反馈**：提供详细的操作状态反馈和错误提示
-- ✅ **安全机制**：提供紧急释放按键功能，防止按键卡住
-- ✅ **模块化架构**：清晰的代码结构，易于理解和扩展
-- ✅ **跨窗口操作**：可以对任意系统窗口进行自动化操作
+### 运行程序
+构建成功后，可执行文件位于：
+```
+d:\ws\out\QtDemo.exe
+```
+
+直接双击运行或通过命令行启动：
+```bash
+d:\ws\out\QtDemo.exe
+```
