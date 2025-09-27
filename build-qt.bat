@@ -43,4 +43,3 @@ if exist "d:\ws\out\QtDemo.exe" (
 ) else (
     echo Warning: Executable not found in expected location
 )
-pause
