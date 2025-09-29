@@ -1,21 +1,42 @@
 cmake_minimum_required(VERSION 3.16)
-project(QtDemo)
+project(QtDemo VERSION 2.1.0 DESCRIPTION "高级窗口操作工具")
 
-set(CMAKE_CXX_STANDARD 17)
+# 设置为 Windows 应用程序（不显示控制台窗口）
+if(WIN32)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-subsystem,windows")
+endif()
+
+# 使用 C++17
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# 查找Qt6组件
+# 寻找qt6
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 
-# 设置Qt自动处理MOC、UIC、RCC
+# 可选的Tesseract OCR支持
+option(ENABLE_TESSERACT "Enable Tesseract OCR support" OFF)
+
+if(ENABLE_TESSERACT)
+    find_package(Tesseract CONFIG)
+    if(Tesseract_FOUND)
+        message(STATUS "Tesseract found: ${Tesseract_VERSION}")
+        message(STATUS "Tesseract include dirs: ${Tesseract_INCLUDE_DIRS}")
+        message(STATUS "Tesseract libraries: ${Tesseract_LIBRARIES}")
+        add_compile_definitions(TESSERACT_ENABLED)
+    else()
+        message(WARNING "Tesseract not found, OCR functionality will be disabled")
+    endif()
+else()
+    message(STATUS "Tesseract OCR support disabled")
+endif()
+
+
+# Qt 自动处理 MOC/UIC/RCC
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-# 包含头文件目录
-include_directories(${CMAKE_SOURCE_DIR}/include)
-
-# 明确指定源文件
+# 源码和头文件
 set(SOURCES
     src/main.cpp
     src/ui/MainWindow.cpp
@@ -29,7 +50,10 @@ set(SOURCES
     src/core/MouseSimulator.cpp
     src/core/KeyboardSimulator.cpp
     src/core/CoordinateDisplay.cpp
+    src/core/WindowCapture.cpp
+    src/core/ImageProcessor.cpp
     src/utils/AsyncLogger.cpp
+    src/utils/Version.cpp
 )
 
 set(HEADERS
@@ -44,61 +68,41 @@ set(HEADERS
     include/core/MouseSimulator.h
     include/core/KeyboardSimulator.h
     include/core/CoordinateDisplay.h
+    include/core/WindowCapture.h
+    include/core/ImageProcessor.h
     include/core/CommonTypes.h
     include/utils/AsyncLogger.h
+    include/utils/Version.h
 )
 
-# 添加可执行文件
-set(RESOURCE_FILES "")
-if(WIN32)
-    set(RESOURCE_FILES QtDemo.rc)
-endif()
-
+# 可执行文件
 add_executable(QtDemo
     ${SOURCES}
     ${HEADERS}
-    ${RESOURCE_FILES}
+    QtDemo.rc
 )
 
-# 链接Qt库
-target_link_libraries(QtDemo Qt6::Core Qt6::Widgets)
+# 头文件路径
+target_include_directories(QtDemo PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+)
 
-# Windows特定设置
-if(WIN32)
-    set_target_properties(QtDemo PROPERTIES
-        WIN32_EXECUTABLE TRUE
-    )
-    
-    # MinGW特定设置：嵌入管理员权限清单
-    if(MINGW)
-        # 使用管理员权限子系统标志
-        set_target_properties(QtDemo PROPERTIES
-            LINK_FLAGS "-Wl,--subsystem,windows"
-        )
-        
-        # 添加自定义命令来嵌入清单
-        add_custom_command(TARGET QtDemo POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E echo "正在尝试嵌入管理员权限清单..."
-            COMMENT "嵌入清单文件"
-        )
-    endif()
-    
-    # 链接Windows API库
-    target_link_libraries(QtDemo user32 gdi32)
+if(ENABLE_TESSERACT AND Tesseract_FOUND)
+    target_include_directories(QtDemo PRIVATE ${Tesseract_INCLUDE_DIRS})
 endif()
 
-# 设置输出目录到 d:/ws/out
-set(OUTPUT_DIRECTORY "d:/ws/out")
-file(MAKE_DIRECTORY ${OUTPUT_DIRECTORY})
+# 链接库
+target_link_libraries(QtDemo
+    Qt6::Core
+    Qt6::Widgets
+)
+
+if(ENABLE_TESSERACT AND Tesseract_FOUND)
+    target_link_libraries(QtDemo ${Tesseract_LIBRARIES})
+endif()
+
+
+# 输出目录
 set_target_properties(QtDemo PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIRECTORY}
-    RUNTIME_OUTPUT_DIRECTORY_DEBUG ${OUTPUT_DIRECTORY}
-    RUNTIME_OUTPUT_DIRECTORY_RELEASE ${OUTPUT_DIRECTORY}
+    RUNTIME_OUTPUT_DIRECTORY "D:/ws/out"
 )
-
-# 编译器特定设置
-if(MSVC)
-    target_compile_options(QtDemo PRIVATE /W4)
-else()
-    target_compile_options(QtDemo PRIVATE -Wall -Wextra -Wpedantic)
-endif()

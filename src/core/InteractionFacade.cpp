@@ -112,6 +112,11 @@ bool InteractionFacade::hasTargetWindow() const
     return windowManager->isBound() && coordinateConverter->hasValidWindow();
 }
 
+HWND InteractionFacade::getTargetWindow() const
+{
+    return windowManager->getBoundWindow();
+}
+
 WindowInfo InteractionFacade::getCurrentWindowInfo() const
 {
     return windowManager->getBoundWindowInfo();

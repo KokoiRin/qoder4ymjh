@@ -3,6 +3,7 @@
 #include <QThread>
 #include <QTimer>
 #include <QCursor>
+#include <QEventLoop>
 
 ClickSimulator::ClickSimulator(QObject *parent)
     : QObject(parent)
@@ -526,7 +527,10 @@ LPARAM ClickSimulator::makeLParam(int x, int y) const
 void ClickSimulator::delay(int milliseconds) const
 {
     if (milliseconds > 0) {
-        QThread::msleep(milliseconds);
+        // 使用事件循环延迟，避免阻塞主线程
+        QEventLoop loop;
+        QTimer::singleShot(milliseconds, &loop, &QEventLoop::quit);
+        loop.exec();
     }
 }
 

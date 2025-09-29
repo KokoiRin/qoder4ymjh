@@ -1,6 +1,8 @@
 #include "core/MouseSimulator.h"
 #include <QThread>
 #include <QDebug>
+#include <QEventLoop>
+#include <QTimer>
 
 MouseSimulator::MouseSimulator(QObject *parent)
     : QObject(parent)
@@ -241,7 +243,10 @@ LPARAM MouseSimulator::makeLParam(int x, int y) const
 void MouseSimulator::delay(int milliseconds) const
 {
     if (milliseconds > 0) {
-        QThread::msleep(milliseconds);
+        // 使用事件循环延迟，避免阻塞主线程
+        QEventLoop loop;
+        QTimer::singleShot(milliseconds, &loop, &QEventLoop::quit);
+        loop.exec();
     }
 }
 

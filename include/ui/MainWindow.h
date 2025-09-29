@@ -20,6 +20,7 @@
 #include "core/ColorPicker.h"
 #include "ui/LogWindow.h"
 #include "ui/WindowPreviewPage.h"
+#include "utils/Version.h"
 
 class MainWindow : public QMainWindow
 {
@@ -61,6 +62,12 @@ private slots:
     
     // 标签页切换
     void onTabChanged(int index);
+    
+    // 新增：预览点击转换
+    void onPreviewClicked(const QPoint& previewPos, const QPoint& windowPos, Qt::MouseButton button);
+    
+    // 菜单操作
+    void showAboutDialog();
 
 protected:
     void mousePressEvent(QMouseEvent *event) override;
@@ -72,6 +79,7 @@ private:
     void setupWindowManagePage();
     void setupPreviewPage();
     void setupLogPage();
+    void setupMenuBar();        // 新增：设置菜单栏
     
     // 核心模块 - 使用新的架构
     InteractionFacade* interactionFacade;

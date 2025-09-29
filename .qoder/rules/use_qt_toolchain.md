@@ -1,7 +1,7 @@
 ---
-trigger: manual
-alwaysApply: false
+trigger: always_on
+alwaysApply: true
 ---
 修改代码时，尽量少改动已经写好的代码。除非需要修改其中的功能。
 
-编译工具链使用qt的toolchain，gcc等工具的路径为"D:\Qt\Tools\mingw1310_64\bin\"。
+直接使用zsh D:/ws/qoder4ymjh/build.sh进行编译。

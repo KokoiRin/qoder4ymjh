@@ -339,6 +339,9 @@ void MainWindow::setupPreviewPage()
     // 设置预览页面固定16:9比例
     previewPage->setFixedAspectRatio(true);
     
+    // 连接预览页面的点击信号
+    connect(previewPage, &WindowPreviewPage::previewClicked, this, &MainWindow::onPreviewClicked);
+    
     tabWidget->addTab(previewPage, "窗口预览");
 }
 
@@ -425,6 +428,49 @@ void MainWindow::onRefreshWindows()
     updateWindowInfo();
     QString statusMsg = QString("已刷新，找到 %1 个窗口").arg(windowList.size());
     updateClickStatus(statusMsg);
+    
+    // 新增：自动尝试绑定“一梦江湖”窗口
+    int targetIndex = -1;
+    for (size_t i = 0; i < windowList.size(); ++i) {
+        const auto& window = windowList[i];
+        if (window.title.contains("一梦江湖", Qt::CaseInsensitive)) {
+            targetIndex = static_cast<int>(i);
+            LOG_INFO("MainWindow", QString("在刷新列表时找到一梦江湖窗口: %1").arg(window.title));
+            break;
+        }
+    }
+    
+    if (targetIndex >= 0) {
+        // 设置下拉框选中项
+        windowComboBox->setCurrentIndex(targetIndex);
+        
+        // 自动绑定窗口
+        bool success = interactionFacade->bindWindow(targetIndex);
+        if (success) {
+            WindowInfo info = interactionFacade->getCurrentWindowInfo();
+            
+            // 设置到预览页面
+            if (previewPage) {
+                previewPage->setTargetWindow(info.hwnd, info.title);
+            }
+            
+            updateWindowInfo();
+            updateClickStatus(QString("✓ 自动绑定一梦江湖窗口成功: %1").arg(info.title));
+            
+            // 记录窗口绑定日志
+            QString windowDetails = QString("类名: %1, 句柄: 0x%2")
+                .arg(info.className)
+                .arg((quintptr)info.hwnd, 0, 16);
+            LOG_WINDOW_BOUND(info.title, windowDetails);
+            
+            LOG_INFO("MainWindow", QString("自动绑定一梦江湖窗口成功: %1").arg(info.title));
+        } else {
+            updateClickStatus("✗ 自动绑定一梦江湖窗口失败", true);
+            LOG_ERROR("MainWindow", "自动绑定失败", "绑定一梦江湖窗口失败");
+        }
+    } else {
+        LOG_INFO("MainWindow", "在刷新列表时未找到一梦江湖窗口");
+    }
     
     LOG_INFO("InteractionFacade", statusMsg);
 }
@@ -824,4 +870,138 @@ void MainWindow::onTabChanged(int index)
     }
     
     LOG_INFO("MainWindow", QString("切换到标签页: %1").arg(tabWidget->tabText(index)));
+}
+
+// 预览点击转换实现
+void MainWindow::onPreviewClicked(const QPoint& previewPos, const QPoint& windowPos, Qt::MouseButton button)
+{
+    LOG_INFO("MainWindow", QString("预览页面点击: 预览坐标(%1, %2), 窗口坐标(%3, %4)")
+        .arg(previewPos.x()).arg(previewPos.y())
+        .arg(windowPos.x()).arg(windowPos.y()));
+    
+    // 检查是否有绑定的窗口
+    if (!interactionFacade->hasTargetWindow()) {
+        updateClickStatus("错误: 没有绑定的目标窗口！", true);
+        LOG_ERROR("MainWindow", "预览点击失败", "没有绑定的目标窗口");
+        return;
+    }
+    
+    // 检查转换后的坐标是否有效
+    if (windowPos.isNull() || windowPos.x() < 0 || windowPos.y() < 0) {
+        updateClickStatus("错误: 坐标转换失败，请检查预览状态！", true);
+        LOG_ERROR("MainWindow", "预览点击失败", 
+            QString("无效的转换坐标(%1, %2)").arg(windowPos.x()).arg(windowPos.y()));
+        return;
+    }
+    
+    // 获取目标窗口的客户区尺寸进行边界检查
+    HWND targetHwnd = interactionFacade->getTargetWindow();
+    if (targetHwnd) {
+        RECT clientRect;
+        if (GetClientRect(targetHwnd, &clientRect)) {
+            int clientWidth = clientRect.right - clientRect.left;
+            int clientHeight = clientRect.bottom - clientRect.top;
+            
+            if (windowPos.x() >= clientWidth || windowPos.y() >= clientHeight) {
+                updateClickStatus(QString("警告: 坐标(%1,%2)超出客户区范围(%3x%4)")
+                    .arg(windowPos.x()).arg(windowPos.y()).arg(clientWidth).arg(clientHeight), true);
+                LOG_WARNING("MainWindow", "坐标超出范围", 
+                    QString("目标坐标(%1,%2), 客户区尺寸(%3x%4)")
+                        .arg(windowPos.x()).arg(windowPos.y()).arg(clientWidth).arg(clientHeight));
+                // 仍然尝试执行，但给出警告
+            }
+            
+            LOG_INFO("MainWindow", QString("坐标验证: 目标(%1,%2), 客户区尺寸(%3x%4)")
+                .arg(windowPos.x()).arg(windowPos.y()).arg(clientWidth).arg(clientHeight));
+        }
+    }
+    
+    // 将窗口坐标设置到点击坐标输入框
+    QString coordText = QString("%1,%2").arg(windowPos.x()).arg(windowPos.y());
+    clickPosEdit->setText(coordText);
+    
+    // 设置坐标类型为客户区坐标（因为预览捕获的是客户区内容）
+    for (int i = 0; i < coordTypeCombo->count(); ++i) {
+        if (coordTypeCombo->itemData(i).toInt() == static_cast<int>(CoordinateType::Client)) {
+            coordTypeCombo->setCurrentIndex(i);
+            break;
+        }
+    }
+    
+    // 设置鼠标按键类型
+    MouseButton mouseBtn = MouseButton::Left;
+    if (button == Qt::RightButton) {
+        mouseBtn = MouseButton::Right;
+    } else if (button == Qt::MiddleButton) {
+        mouseBtn = MouseButton::Middle;
+    }
+    
+    for (int i = 0; i < mouseButtonCombo->count(); ++i) {
+        if (mouseButtonCombo->itemData(i).toInt() == static_cast<int>(mouseBtn)) {
+            mouseButtonCombo->setCurrentIndex(i);
+            break;
+        }
+    }
+    
+    // 自动执行点击操作
+    ClickType clickType = ClickType::Single; // 默认单击
+    bool success = interactionFacade->mouseClick(windowPos, CoordinateType::Client, mouseBtn, clickType);
+    
+    if (success) {
+        updateClickStatus(QString("✓ 预览点击成功转换: (%1, %2) -> (%3, %4)")
+            .arg(previewPos.x()).arg(previewPos.y())
+            .arg(windowPos.x()).arg(windowPos.y()));
+            
+        // 记录成功的点击日志
+        QString buttonName;
+        switch (mouseBtn) {
+            case MouseButton::Left: buttonName = "左键"; break;
+            case MouseButton::Right: buttonName = "右键"; break;
+            case MouseButton::Middle: buttonName = "中键"; break;
+        }
+        
+        LOG_INFO("预览点击转换", 
+            QString("成功执行%1点击 - 预览(%2, %3) -> 客户区(%4, %5)")
+                .arg(buttonName)
+                .arg(previewPos.x()).arg(previewPos.y())
+                .arg(windowPos.x()).arg(windowPos.y()));
+    } else {
+        updateClickStatus("✗ 预览点击转换失败", true);
+        LOG_ERROR("预览点击转换", "点击执行失败", 
+            QString("目标坐标: (%1, %2)").arg(windowPos.x()).arg(windowPos.y()));
+    }
+}
+
+// 关于对话框实现
+void MainWindow::showAboutDialog()
+{
+    QString aboutText = QString(
+        "<h2>Qoder4Huhu - 多功能桌面工具</h2>"
+        "<p><b>版本:</b> 2.1.0</p>"
+        "<p><b>描述:</b> 高级窗口操作工具</p>"
+        "<hr>"
+        "<p><b>主要功能:</b></p>"
+        "<ul>"
+        "<li>窗口绑定与管理</li>"
+        "<li>颜色拾取工具</li>"
+        "<li>鼠标点击模拟</li>"
+        "<li>键盘按键模拟</li>"
+        "<li>坐标显示与捕获</li>"
+        "<li>窗口实时预览</li>"
+        "</ul>"
+        "<hr>"
+        "<p><b>技术栈:</b> Qt6 + C++17 + Windows API</p>"
+        "<p><b>构建工具:</b> CMake + MinGW</p>"
+        "<p><small>© 2024 Qoder4Huhu Project</small></p>"
+    );
+    
+    QMessageBox aboutBox(this);
+    aboutBox.setWindowTitle("关于 Qoder4Huhu");
+    aboutBox.setTextFormat(Qt::RichText);
+    aboutBox.setText(aboutText);
+    aboutBox.setIconPixmap(QPixmap(":/icons/app.png").scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    aboutBox.setStandardButtons(QMessageBox::Ok);
+    aboutBox.exec();
+    
+    LOG_INFO("MainWindow", "显示关于对话框");
 }

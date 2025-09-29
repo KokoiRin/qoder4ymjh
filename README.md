@@ -1,6 +1,16 @@
 # QtDemo Project
 
-这是一个基于Qt6的C++桌面应用程序项目，提供了窗口操作、颜色拾取和鼠标点击模拟功能。
+这是一个基于Qt6的C++桌面应用程序项目，提供了窗口操作、颜色拾取、鼠标点击模拟和**高级窗口捕获**功能。
+
+## 🚀 主要特性
+
+- **高级窗口捕获**：支持捕获最小化窗口，基于Windows Graphics Capture API
+- **图像处理**：集成OpenCV进行图像处理和分析
+- **窗口操作**：枚举、绑定、管理系统窗口
+- **鼠标模拟**：精确的鼠标点击和操作模拟
+- **键盘模拟**：键盘按键和组合键模拟
+- **坐标转换**：支持多种坐标系转换
+- **实时预览**：窗口内容实时预览和捕获
 
 ## 项目架构
 
@@ -8,7 +18,7 @@
 本项目采用**外观模式(Facade Pattern)架构**，通过InteractionFacade统一封装所有核心功能模块：
 - **视图层（View）**：基于Qt Widgets的用户界面层，包括MainWindow、LogWindow、WindowPreviewPage
 - **外观层（Facade）**：InteractionFacade作为统一入口，封装并协调所有核心模块
-- **核心模块（Core）**：独立的功能模块，各司其职，分别处理窗口管理、颜色拾取、坐标转换、鼠标模拟和键盘模拟
+- **核心模块（Core）**：独立的功能模块，各司其职，分别处理窗口管理、颜色拾取、坐标转换、鼠标模拟、键盘模拟、**窗口捕获和图像处理**
 
 ### 架构图
 ```mermaid
@@ -22,6 +32,8 @@ graph TD
         MS[MouseSimulator<br/>鼠标模拟]
         KS[KeyboardSimulator<br/>键盘模拟]
         CD[CoordinateDisplay<br/>坐标显示]
+        WC[WindowCapture<br/>窗口捕获] 
+        IP[ImageProcessor<br/>图像处理]
     end
     
     Facade --> WM
@@ -30,6 +42,8 @@ graph TD
     Facade --> MS
     Facade --> KS  
     Facade --> CD
+    Facade --> WC
+    Facade --> IP
     
     Core --> OS[系统调用层<br/>Windows API]
 ```
@@ -98,6 +112,36 @@ graph TD
   - `getCurrentMousePosition()` - 获取当前鼠标位置
 - **信号**：`coordinateChanged()`, `coordinateCaptured()`
 
+### 8. WindowCapture - 高级窗口捕获器 🆕
+- **职责**：高性能窗口捕获，支持最小化窗口
+- **技术特性**：
+  - 基于Windows Graphics Capture API（回退到传统PrintWindow）
+  - 支持捕获最小化的窗口
+  - 硬件加速支持
+  - 高效的内存管理
+- **主要接口**：
+  - `initializeCapture(HWND)` - 初始化捕获目标
+  - `startCapture()` / `stopCapture()` - 开始/停止捕获
+  - `captureFrame()` - 捕获单帧图像
+  - `isSupported()` - 检查系统支持
+  - `setFrameRate(int)` - 设置帧率
+- **信号**：`frameReady()`, `captureStateChanged()`, `captureError()`
+
+### 9. ImageProcessor - 图像处理器 🆕
+- **职责**：基于OpenCV的图像处理和分析
+- **技术特性**：
+  - 支持多种图像滤镜（模糊、锐化、边缘检测等）
+  - 高效的格式转换（QImage ↔ cv::Mat）
+  - 异步处理支持
+  - GPU加速选项
+- **主要接口**：
+  - `resizeImage()` - 图像缩放
+  - `applyFilter()` - 应用滤镜效果
+  - `calculateSimilarity()` - 计算图像相似度
+  - `matToQImage()` / `qImageToMat()` - 格式转换
+  - `setProcessingThreads(int)` - 设置处理线程数
+- **信号**：`processingCompleted()`, `processingProgress()`, `processingError()`
+
 ## 构建与运行
 
 ### 环境要求
@@ -105,32 +149,10 @@ graph TD
 - CMake 3.16+
 - MinGW-w64 13.1.0
 - Windows 10/11
+- **OpenCV 4.x** (可选，用于图像处理功能)
 
 ### 构建步骤
-
-#### 使用提供的构建脚本（推荐）
-```bash
-# 直接运行构建脚本
-.\build-qt.bat
-```
-
-#### 手动构建
-```bash
-# 1. 创建构建目录
-mkdir cmake-build-debug
-cd cmake-build-debug
-
-# 2. 配置环境变量
-set PATH=D:\Qt\Tools\mingw1310_64\bin;%PATH%
-set CMAKE_PREFIX_PATH=D:/Qt/6.9.2/mingw_64
-set Qt6_DIR=D:/Qt/6.9.2/mingw_64/lib/cmake/Qt6
-
-# 3. 生成构建文件
-cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="D:/Qt/6.9.2/mingw_64"
-
-# 4. 编译项目
-mingw32-make
-```
+直接使用命令 zsh D:/ws/qoder4ymjh/build.sh
 
 ### 运行程序
 构建成功后，可执行文件位于：

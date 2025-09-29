@@ -36,6 +36,7 @@ _deps
 build.ninja
 
 # IDE 相关
+.VS/
 .idea/
 .vscode/
 *.vcxproj*
@@ -48,6 +49,8 @@ Thumbs.db
 *.tmp
 *.temp
 *.log
+vcpkg_installed/
+vcpkg-configuration.json
 
 # 输出目录
 /out/

@@ -10,16 +10,20 @@
 #include "core/MouseSimulator.h"
 #include "core/KeyboardSimulator.h"
 #include "core/CoordinateDisplay.h"
+#include "core/WindowCapture.h"
+#include "core/ImageProcessor.h"
 
 /**
  * InteractionFacade - 外观模式实现
  * 
- * 这个类作为所有用户交互功能的统一入口点，封装了四个核心模块的复杂性：
+ * 这个类作为所有用户交互功能的统一入口点，封装了七个核心模块的复杂性：
  * - WindowManager: 窗口管理
  * - CoordinateConverter: 坐标转换
  * - MouseSimulator: 鼠标模拟
  * - KeyboardSimulator: 键盘模拟
  * - CoordinateDisplay: 坐标显示
+ * - WindowCapture: 高级窗口捕获
+ * - ImageProcessor: 图像处理
  * 
  * 设计原则：
  * 1. 单一职责：每个子模块专注于自己的功能领域
@@ -42,6 +46,7 @@ public:
     bool bindWindow(HWND hwnd);
     void unbindWindow();
     bool hasTargetWindow() const;
+    HWND getTargetWindow() const;  // 新增：获取当前绑定的窗口句柄
     WindowInfo getCurrentWindowInfo() const;
     bool bringWindowToFront();
     
@@ -81,6 +86,39 @@ public:
     // 坐标转换
     QPoint convertCoordinate(const QPoint& pos, CoordinateType fromType, CoordinateType toType) const;
     
+    // ========== 窗口捕获统一接口 ==========
+    bool initializeWindowCapture(HWND hwnd);
+    bool startWindowCapture();
+    bool stopWindowCapture();
+    QImage captureWindowFrame();
+    bool isWindowCaptureSupported() const;
+    bool isWindowCaptureActive() const;
+    QSize getWindowCaptureSize() const;
+    
+    // 捕获配置
+    void setWindowCaptureFrameRate(int fps);
+    void setWindowCaptureFormat(WindowCapture::OutputFormat format);
+    
+    // ========== 图像处理统一接口 ==========
+    bool processImage(const QImage& input, QImage& output, ImageProcessor::FilterType filter, double intensity = 1.0);
+    bool resizeImage(const QImage& input, QImage& output, int width, int height);
+    double calculateImageSimilarity(const QImage& image1, const QImage& image2);
+    QString getImageInfo(const QImage& image) const;
+    
+    // OCR功能
+    bool recognizeText(const QImage& input, QString& recognizedText, const QString& language = "chi_sim");
+    bool searchTextInImage(const QImage& input, const QString& searchString, QRect& foundRect, double& confidence);
+    bool preprocessImageForOCR(const QImage& input, QImage& output);
+    
+    // 图像处理配置
+    void setImageProcessingThreads(int threadCount);
+    void enableGpuAcceleration(bool enable);
+    
+    // OCR配置
+    void setOCRLanguage(const QString& language);
+    QString getOCRLanguage() const;
+    bool isOCRAvailable() const;
+    
     // ========== 验证接口 ==========
     bool canPerformMouseClick() const;
     bool canPerformKeyPress() const;
@@ -106,6 +144,8 @@ private:
     MouseSimulator* mouseSimulator;
     KeyboardSimulator* keyboardSimulator;
     CoordinateDisplay* coordinateDisplay;
+    WindowCapture* windowCapture;          // 新增
+    ImageProcessor* imageProcessor;        // 新增
     
     // 初始化方法
     void initializeModules();
